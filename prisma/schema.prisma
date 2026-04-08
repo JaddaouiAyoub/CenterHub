@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+
+
+enum Role {
+  ADMIN
+  TEACHER
+  PARENT
+  SECRETARY
+  STUDENT
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String
+  role          Role      @default(STUDENT)
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Profiles
+  teacherProfile TeacherProfile?
+  studentProfile StudentProfile?
+}
+
+model TeacherProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specialization String?
+  bio            String?
+  courses        Course[]
+}
+
+model StudentProfile {
+  id          String       @id @default(cuid())
+  userId      String       @unique
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dateOfBirth DateTime?
+  classId     String?
+  class       Class?       @relation(fields: [classId], references: [id])
+  enrollments Enrollment[]
+  payments    Payment[]
+  attendance  Attendance[]
+}
+
+model Subject {
+  id      String   @id @default(cuid())
+  name    String   @unique
+  courses Course[]
+}
+
+model Class {
+  id       String           @id @default(cuid())
+  name     String           @unique
+  students StudentProfile[]
+  courses  Course[]
+}
+
+model Course {
+  id        String         @id @default(cuid())
+  name      String
+  teacherId String?
+  teacher   TeacherProfile? @relation(fields: [teacherId], references: [id])
+  subjectId String
+  subject   Subject        @relation(fields: [subjectId], references: [id])
+  classId   String
+  class     Class          @relation(fields: [classId], references: [id])
+  day       Int            // 0-6 (Sunday-Saturday)
+  startTime String         // e.g., "08:00"
+  endTime   String         // e.g., "10:00"
+
+  attendance Attendance[]
+}
+
+model Enrollment {
+  id        String         @id @default(cuid())
+  studentId String
+  student   StudentProfile @relation(fields: [studentId], references: [id])
+  active    Boolean        @default(true)
+  createdAt DateTime       @default(now())
+}
+
+model Attendance {
+  id        String         @id @default(cuid())
+  studentId String
+  student   StudentProfile @relation(fields: [studentId], references: [id])
+  courseId  String
+  course    Course         @relation(fields: [courseId], references: [id])
+  date      DateTime
+  status    String         // "PRESENT", "ABSENT", "LATE"
+}
+
+model Payment {
+  id        String         @id @default(cuid())
+  studentId String
+  student   StudentProfile @relation(fields: [studentId], references: [id])
+  amount    Float
+  date      DateTime       @default(now())
+  month     Int
+  year      Int
+  status    String         // "PAID", "PENDING", "PARTIAL"
+  method    String?        // "CASH", "CARD", "TRANSFER"
+}
+
