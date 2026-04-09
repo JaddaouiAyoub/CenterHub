@@ -5,20 +5,34 @@ import { Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 
-export async function getStudents() {
+export async function getStudents(search = "", page = 1, pageSize = 10) {
   try {
-    const students = await prisma.user.findMany({
-      where: { role: Role.STUDENT },
-      include: {
-        studentProfile: {
-          include: {
-            class: true
+    const skip = (page - 1) * pageSize;
+    const whereClause: any = { role: Role.STUDENT };
+    
+    if (search) {
+      whereClause.name = { contains: search, mode: "insensitive" };
+    }
+
+    const [students, total] = await Promise.all([
+      prisma.user.findMany({
+        where: whereClause,
+        skip,
+        take: pageSize,
+        include: {
+          studentProfile: {
+            include: {
+              class: true,
+              subjects: true
+            }
           }
-        }
-      },
-      orderBy: { createdAt: "desc" }
-    });
-    return { students };
+        },
+        orderBy: { createdAt: "desc" }
+      }),
+      prisma.user.count({ where: whereClause })
+    ]);
+
+    return { students, total, totalPages: Math.ceil(total / pageSize) };
   } catch (error) {
     return { error: "Failed to fetch students" };
   }
@@ -30,6 +44,7 @@ export async function registerStudent(formData: FormData) {
   const password = formData.get("password") as string;
   const dateOfBirth = formData.get("dateOfBirth") as string;
   const classId = formData.get("classId") as string;
+  const subjectIds = formData.getAll("subjectIds") as string[];
 
   if (!name || !email || !password) {
     return { error: "Missing required fields" };
@@ -47,7 +62,10 @@ export async function registerStudent(formData: FormData) {
         studentProfile: {
           create: {
             dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
-            classId: classId || null
+            classId: classId || null,
+            subjects: {
+              connect: subjectIds.filter(Boolean).map(id => ({ id }))
+            }
           }
         }
       }
@@ -66,22 +84,33 @@ export async function registerStudent(formData: FormData) {
 export async function updateStudent(id: string, formData: FormData) {
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
   const dateOfBirth = formData.get("dateOfBirth") as string;
   const classId = formData.get("classId") as string;
+  const subjectIds = formData.getAll("subjectIds") as string[];
 
   try {
-    await prisma.user.update({
-      where: { id },
-      data: {
-        name,
-        email,
-        studentProfile: {
-          update: {
-            dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
-            classId: classId || null
+    const updateData: any = {
+      name,
+      email,
+      studentProfile: {
+        update: {
+          dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+          classId: classId || null,
+          subjects: {
+            set: subjectIds.filter(Boolean).map(id => ({ id }))
           }
         }
       }
+    };
+
+    if (password) {
+      updateData.password = await bcrypt.hash(password, 10);
+    }
+
+    await prisma.user.update({
+      where: { id },
+      data: updateData
     });
 
     revalidatePath("/dashboard");

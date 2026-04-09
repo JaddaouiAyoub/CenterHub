@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { getStudents, registerStudent, updateStudent, deleteStudent } from "@/actions/students";
-import { getClasses } from "@/actions/courses";
+import { getClasses, getSubjects } from "@/actions/courses";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+import { MultiSelect } from "@/components/ui/multi-select";
 import { 
   Table, 
   TableBody, 
@@ -29,12 +31,31 @@ export function StudentsList() {
   const [editingStudent, setEditingStudent] = useState<any>(null);
   const [showPassword, setShowPassword] = useState(false);
 
+  const [subjects, setSubjects] = useState<any[]>([]);
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+
+  // Pagination & Search
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
   const fetchData = async () => {
     try {
-      const [sRes, cData] = await Promise.all([getStudents(), getClasses()]);
-      if (sRes.students) setStudents(sRes.students);
+      const [sRes, cData, subData] = await Promise.all([
+        getStudents(search, page, pageSize), 
+        getClasses(),
+        getSubjects()
+      ]);
+      if (sRes.students) {
+        setStudents(sRes.students);
+        setTotalItems(sRes.total || 0);
+        setTotalPages(sRes.totalPages || 1);
+      }
       if (sRes.error) toast.error(sRes.error);
       setClasses(cData || []);
+      setSubjects(subData || []);
     } catch (error) {
       toast.error("Erreur de chargement des données");
     } finally {
@@ -43,12 +64,17 @@ export function StudentsList() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, page, pageSize]);
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    selectedSubjects.forEach(id => formData.append("subjectIds", id));
+    
     const res = await registerStudent(formData);
     if (res.success) {
       toast.success("Étudiant inscrit avec succès");
@@ -63,6 +89,7 @@ export function StudentsList() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     if (!showPassword) formData.delete("password");
+    selectedSubjects.forEach(id => formData.append("subjectIds", id));
     
     const res = await updateStudent(editingStudent.id, formData);
     if (res.success) {
@@ -89,14 +116,24 @@ export function StudentsList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-xl font-bold text-slate-900">Gestion des Étudiants</h2>
-        <Dialog open={isRegisterOpen} onOpenChange={setIsRegisterOpen}>
-          <DialogTrigger render={
-            <Button className="bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-200">
-              <UserPlus className="w-4 h-4 mr-2" /> Nouvelle Inscription
-            </Button>
-          } />
+        <div className="flex items-center space-x-2 w-full sm:w-auto">
+          <Input 
+            placeholder="Rechercher un étudiant..." 
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            className="w-full sm:w-64 border-slate-200"
+          />
+          <Dialog open={isRegisterOpen} onOpenChange={(open) => {
+            setIsRegisterOpen(open);
+            if(open) setSelectedSubjects([]);
+          }}>
+            <DialogTrigger render={
+              <Button className="bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-200 whitespace-nowrap">
+                <UserPlus className="w-4 h-4 mr-2" /> Nouvelle Inscription
+              </Button>
+            } />
 
           <DialogContent className="sm:max-w-[425px] overflow-hidden border-none p-0 bg-white/95 backdrop-blur-xl shadow-2xl">
             <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 text-white text-center">
@@ -140,14 +177,26 @@ export function StudentsList() {
                   </Select>
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label className="text-slate-600">Matières</Label>
+                <MultiSelect 
+                  options={subjects.map(s => ({ id: s.id, name: s.name }))}
+                  selectedIds={selectedSubjects}
+                  onChange={setSelectedSubjects}
+                  placeholder="Sélectionner les matières"
+                />
+              </div>
               <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 h-12">Inscrire l'étudiant</Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
+  </div>
 
       {/* Edit Dialog */}
-      <Dialog open={!!editingStudent} onOpenChange={(open) => !open && setEditingStudent(null)}>
+      <Dialog open={!!editingStudent} onOpenChange={(open) => {
+        if(!open) setEditingStudent(null);
+      }}>
         <DialogContent className="sm:max-w-[425px] overflow-hidden border-none p-0 bg-white/95 backdrop-blur-xl shadow-2xl">
           <div className="bg-gradient-to-r from-teal-600 to-emerald-700 p-6 text-white text-center">
             <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -191,6 +240,17 @@ export function StudentsList() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-slate-600">Matières</Label>
+              <MultiSelect 
+                key={`subjects-${editingStudent?.id}`}
+                options={subjects.map(s => ({ id: s.id, name: s.name }))}
+                selectedIds={selectedSubjects}
+                onChange={setSelectedSubjects}
+                placeholder="Sélectionner les matières"
+              />
             </div>
 
             <div className="flex items-center space-x-2 py-2">
@@ -246,9 +306,20 @@ export function StudentsList() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 px-3">
-                      {s.studentProfile?.class?.name || "Non assigné"}
-                    </Badge>
+                    <div className="flex flex-col space-y-1">
+                      <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 px-3 w-fit">
+                        {s.studentProfile?.class?.name || "Non assigné"}
+                      </Badge>
+                      {s.studentProfile?.subjects && s.studentProfile.subjects.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {s.studentProfile.subjects.map((sub: any) => (
+                            <Badge key={sub.id} variant="secondary" className="text-[10px] px-1 py-0 font-normal">
+                              {sub.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-slate-500 text-sm">
                     {new Date(s.createdAt).toLocaleDateString()}
@@ -258,7 +329,10 @@ export function StudentsList() {
                       variant="ghost" 
                       size="icon" 
                       className="text-slate-400 hover:text-emerald-600 hover:bg-emerald-50"
-                      onClick={() => setEditingStudent(s)}
+                      onClick={() => {
+                        setEditingStudent(s);
+                        setSelectedSubjects(s.studentProfile?.subjects?.map((sub:any) => sub.id) || []);
+                      }}
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -277,6 +351,18 @@ export function StudentsList() {
           </TableBody>
         </Table>
       </div>
+
+      <PaginationControls
+        currentPage={page}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalItems={totalItems}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setPage(1);
+        }}
+      />
     </div>
   );
 }
