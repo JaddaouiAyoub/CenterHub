@@ -53,12 +53,14 @@ model StudentProfile {
   enrollments Enrollment[]
   payments    Payment[]
   attendance  Attendance[]
+  subjects    Subject[]
 }
 
 model Subject {
   id      String   @id @default(cuid())
   name    String   @unique
   courses Course[]
+  students StudentProfile[]
 }
 
 model Class {
@@ -80,6 +82,7 @@ model Course {
   day       Int            // 0-6 (Sunday-Saturday)
   startTime String         // e.g., "08:00"
   endTime   String         // e.g., "10:00"
+  meetingLink String?      // e.g., "https://zoom.us/j/123456"
 
   attendance Attendance[]
 }
