@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { getCourses, createCourse, updateCourse, deleteCourse, getSubjects, getClasses, createSubject, createClass } from "@/actions/courses";
 import { getTeachers } from "@/actions/teachers";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { 
   Table, 
   TableBody, 
@@ -15,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Calendar, Trash2, Plus, Clock, BookOpen, Users, Edit } from "lucide-react";
+import { Calendar, Trash2, Plus, Clock, BookOpen, Users, Edit, Link } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -31,12 +32,23 @@ export function CourseScheduler() {
   const [isCourseOpen, setIsCourseOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<any>(null);
 
+  // Pagination & Search
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
   const fetchData = async () => {
     try {
       const [co, su, cl, te] = await Promise.all([
-        getCourses(), getSubjects(), getClasses(), getTeachers()
+        getCourses(search, page, pageSize), getSubjects(), getClasses(), getTeachers()
       ]);
-      if (co.courses) setCourses(co.courses);
+      if (co.courses) {
+        setCourses(co.courses);
+        setTotalItems(co.total || 0);
+        setTotalPages(co.totalPages || 1);
+      }
       if (co.error) toast.error(co.error);
       setSubjects(su || []);
       setClasses(cl || []);
@@ -49,8 +61,11 @@ export function CourseScheduler() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, page, pageSize]);
 
   const handleCreateCourse = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -126,15 +141,22 @@ export function CourseScheduler() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-xl font-bold text-slate-900">Emploi du Temps</h2>
-        <div className="flex space-x-2">
-          <Button variant="outline" onClick={handleCreateSubject} className="border-slate-200 text-slate-600 hover:bg-slate-50">
-             <BookOpen className="w-4 h-4 mr-2" /> + Matière
-          </Button>
-          <Button variant="outline" onClick={handleCreateClass} className="border-slate-200 text-slate-600 hover:bg-slate-50">
-             <Users className="w-4 h-4 mr-2" /> + Classe
-          </Button>
+        <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+          <Input 
+            placeholder="Rechercher un cours..." 
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            className="w-full sm:w-56 border-slate-200"
+          />
+          <div className="flex space-x-2 w-full sm:w-auto">
+            <Button variant="outline" onClick={handleCreateSubject} className="border-slate-200 text-slate-600 hover:bg-slate-50 flex-1 sm:flex-none">
+               <BookOpen className="w-4 h-4 mr-2" /> Matière
+            </Button>
+            <Button variant="outline" onClick={handleCreateClass} className="border-slate-200 text-slate-600 hover:bg-slate-50 flex-1 sm:flex-none">
+               <Users className="w-4 h-4 mr-2" /> Classe
+            </Button>
           <Dialog open={isCourseOpen} onOpenChange={setIsCourseOpen}>
             <DialogTrigger render={
               <Button className="bg-purple-600 hover:bg-purple-700 shadow-sm shadow-purple-200">
@@ -227,10 +249,15 @@ export function CourseScheduler() {
                     <Input name="endTime" type="time" required className="border-slate-200 focus:ring-purple-500" />
                   </div>
                 </div>
+                <div className="space-y-2">
+                  <Label className="text-slate-600">Lien de la séance (ex: Zoom, Meet) <span className="text-slate-400 text-xs">- Facultatif</span></Label>
+                  <Input name="meetingLink" type="url" placeholder="https://..." className="border-slate-200 focus:ring-purple-500 font-mono text-sm" />
+                </div>
                 <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 h-12">Enregistrer le cours</Button>
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
       </div>
 
@@ -317,6 +344,10 @@ export function CourseScheduler() {
                 <Input key={`end-${editingCourse?.id}`} name="endTime" type="time" defaultValue={editingCourse?.endTime || ""} required className="border-slate-200 focus:ring-indigo-500" />
               </div>
             </div>
+            <div className="space-y-2">
+              <Label className="text-slate-600">Lien de la séance (ex: Zoom, Meet) <span className="text-slate-400 text-xs">- Facultatif</span></Label>
+              <Input key={`link-${editingCourse?.id}`} name="meetingLink" type="url" defaultValue={editingCourse?.meetingLink || ""} placeholder="https://..." className="border-slate-200 focus:ring-indigo-500 font-mono text-sm" />
+            </div>
             <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 h-12">Sauvegarder les modifications</Button>
           </form>
         </DialogContent>
@@ -362,6 +393,12 @@ export function CourseScheduler() {
                           <BookOpen className="w-3 h-3 mr-1" />
                           {c.subject.name}
                         </Badge>
+                        {c.meetingLink && (
+                          <a href={c.meetingLink} target="_blank" rel="noopener noreferrer" className="flex items-center text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 hover:bg-emerald-100 transition-colors">
+                            <Link className="w-3 h-3 mr-1" />
+                            Lien
+                          </a>
+                        )}
                       </div>
                     </div>
                   </TableCell>
@@ -414,6 +451,18 @@ export function CourseScheduler() {
           </TableBody>
         </Table>
       </div>
+
+      <PaginationControls
+        currentPage={page}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalItems={totalItems}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setPage(1);
+        }}
+      />
     </div>
   );
 }

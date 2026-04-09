@@ -51,20 +51,36 @@ export async function updateClass(id: string, name: string) {
   }
 }
 
-export async function getCourses() {
+export async function getCourses(search = "", page = 1, pageSize = 10) {
   try {
-    const courses = await prisma.course.findMany({
-      include: {
-        teacher: { include: { user: true } },
-        subject: true,
-        class: true
-      },
-      orderBy: [
-        { day: "asc" },
-        { startTime: "asc" }
-      ]
-    });
-    return { courses };
+    const skip = (page - 1) * pageSize;
+    const whereClause: any = {};
+    if (search) {
+      whereClause.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { subject: { name: { contains: search, mode: "insensitive" } } },
+        { class: { name: { contains: search, mode: "insensitive" } } }
+      ];
+    }
+    
+    const [courses, total] = await Promise.all([
+      prisma.course.findMany({
+        where: whereClause,
+        skip,
+        take: pageSize,
+        include: {
+          teacher: { include: { user: true } },
+          subject: true,
+          class: true
+        },
+        orderBy: [
+          { day: "asc" },
+          { startTime: "asc" }
+        ]
+      }),
+      prisma.course.count({ where: whereClause })
+    ]);
+    return { courses, total, totalPages: Math.ceil(total / pageSize) };
   } catch (error) {
     return { error: "Failed to fetch courses" };
   }
@@ -78,6 +94,7 @@ export async function createCourse(formData: FormData) {
   const day = parseInt(formData.get("day") as string);
   const startTime = formData.get("startTime") as string;
   const endTime = formData.get("endTime") as string;
+  const meetingLink = formData.get("meetingLink") as string;
 
   if (!name || !subjectId || !classId || isNaN(day) || !startTime || !endTime) {
     return { error: "Missing required fields" };
@@ -92,7 +109,8 @@ export async function createCourse(formData: FormData) {
         classId,
         day,
         startTime,
-        endTime
+        endTime,
+        meetingLink: meetingLink || null
       }
     });
 
@@ -111,6 +129,7 @@ export async function updateCourse(id: string, formData: FormData) {
   const day = parseInt(formData.get("day") as string);
   const startTime = formData.get("startTime") as string;
   const endTime = formData.get("endTime") as string;
+  const meetingLink = formData.get("meetingLink") as string;
 
   try {
     await prisma.course.update({
@@ -122,7 +141,8 @@ export async function updateCourse(id: string, formData: FormData) {
         classId,
         day,
         startTime,
-        endTime
+        endTime,
+        meetingLink: meetingLink || null
       }
     });
 
@@ -130,6 +150,28 @@ export async function updateCourse(id: string, formData: FormData) {
     return { success: "Course updated successfully" };
   } catch (error) {
     return { error: "Failed to update course" };
+  }
+}
+
+export async function getPaginatedClasses(search = "", page = 1, pageSize = 10) {
+  try {
+    const skip = (page - 1) * pageSize;
+    const whereClause: any = {};
+    if (search) {
+      whereClause.name = { contains: search, mode: "insensitive" };
+    }
+    const [classes, total] = await Promise.all([
+      prisma.class.findMany({
+        where: whereClause,
+        skip,
+        take: pageSize,
+        orderBy: { name: "asc" }
+      }),
+      prisma.class.count({ where: whereClause })
+    ]);
+    return { classes, total, totalPages: Math.ceil(total / pageSize) };
+  } catch (error) {
+    return { error: "Failed to fetch classes" };
   }
 }
 
