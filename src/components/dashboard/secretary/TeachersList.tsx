@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getTeachers, createTeacher, updateTeacher, deleteTeacher } from "@/actions/teachers";
+import { getPaginatedTeachers, createTeacher, updateTeacher, deleteTeacher } from "@/actions/teachers";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { 
   Table, 
   TableBody, 
@@ -25,10 +26,22 @@ export function TeachersList() {
   const [editingTeacher, setEditingTeacher] = useState<any>(null);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Pagination & Search
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
   const fetchTeachers = async () => {
+    setLoading(true);
     try {
-      const res = await getTeachers();
-      if (res.teachers) setTeachers(res.teachers);
+      const res = await getPaginatedTeachers(search, page, pageSize);
+      if (res.teachers) {
+        setTeachers(res.teachers);
+        setTotalItems(res.total || 0);
+        setTotalPages(res.totalPages || 1);
+      }
       if (res.error) toast.error(res.error);
     } catch (error) {
        toast.error("Erreur de chargement des enseignants");
@@ -38,8 +51,11 @@ export function TeachersList() {
   };
 
   useEffect(() => {
-    fetchTeachers();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchTeachers();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, page, pageSize]);
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -84,14 +100,21 @@ export function TeachersList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-xl font-bold text-slate-900">Corps Enseignant</h2>
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger render={
-            <Button className="bg-blue-600 hover:bg-blue-700 shadow-sm shadow-blue-200">
-              <UserPlus className="w-4 h-4 mr-2" /> Ajouter un Enseignant
-            </Button>
-          } />
+        <div className="flex items-center space-x-2 w-full sm:w-auto">
+          <Input 
+            placeholder="Rechercher un enseignant..." 
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            className="w-full sm:w-64 border-slate-200"
+          />
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger render={
+              <Button className="bg-blue-600 hover:bg-blue-700 shadow-sm shadow-blue-200 whitespace-nowrap">
+                <UserPlus className="w-4 h-4 mr-2" /> Ajouter un Enseignant
+              </Button>
+            } />
 
           <DialogContent className="sm:max-w-[425px] overflow-hidden border-none p-0 bg-white/95 backdrop-blur-xl shadow-2xl">
             <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-white text-center">
@@ -122,6 +145,7 @@ export function TeachersList() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Edit Dialog */}
@@ -220,6 +244,18 @@ export function TeachersList() {
           </TableBody>
         </Table>
       </div>
+
+      <PaginationControls
+        currentPage={page}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalItems={totalItems}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setPage(1);
+        }}
+      />
     </div>
   );
 }

@@ -3,15 +3,29 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-export async function getPayments() {
+export async function getPayments(search = "", page = 1, pageSize = 10) {
   try {
-    const payments = await prisma.payment.findMany({
-      include: {
-        student: { include: { user: true } }
-      },
-      orderBy: { date: "desc" }
-    });
-    return { payments };
+    const skip = (page - 1) * pageSize;
+    const whereClause: any = {};
+    if (search) {
+      whereClause.student = {
+        user: { name: { contains: search, mode: "insensitive" } }
+      };
+    }
+
+    const [payments, total] = await Promise.all([
+      prisma.payment.findMany({
+        where: whereClause,
+        skip,
+        take: pageSize,
+        include: {
+          student: { include: { user: true } }
+        },
+        orderBy: { date: "desc" }
+      }),
+      prisma.payment.count({ where: whereClause })
+    ]);
+    return { payments, total, totalPages: Math.ceil(total / pageSize) };
   } catch (error) {
     return { error: "Failed to fetch payments" };
   }

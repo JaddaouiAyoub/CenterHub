@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getClasses, createClass, updateClass, deleteClass } from "@/actions/courses";
+import { getPaginatedClasses, createClass, updateClass, deleteClass } from "@/actions/courses";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { 
   Table, 
   TableBody, 
@@ -22,15 +23,30 @@ export function ClassesList() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingClass, setEditingClass] = useState<any>(null);
 
+  // Pagination & Search
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
   const fetchClasses = async () => {
-    const data = await getClasses();
-    setClasses(data);
+    setLoading(true);
+    const res = await getPaginatedClasses(search, page, pageSize);
+    if (res.classes) {
+      setClasses(res.classes);
+      setTotalItems(res.total || 0);
+      setTotalPages(res.totalPages || 1);
+    }
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchClasses();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchClasses();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, page, pageSize]);
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -63,14 +79,21 @@ export function ClassesList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-xl font-bold text-slate-900">Organisation des Classes</h2>
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger render={
-            <Button className="bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-200">
-              <Plus className="w-4 h-4 mr-2" /> Nouvelle Classe
-            </Button>
-          } />
+        <div className="flex items-center space-x-2 w-full sm:w-auto">
+          <Input 
+            placeholder="Rechercher une classe..." 
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            className="w-full sm:w-64 border-slate-200"
+          />
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger render={
+              <Button className="bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-200 whitespace-nowrap">
+                <Plus className="w-4 h-4 mr-2" /> Nouvelle Classe
+              </Button>
+            } />
           <DialogContent className="sm:max-w-[425px] overflow-hidden border-none p-0 bg-white/95 backdrop-blur-xl shadow-2xl">
             <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 text-white text-center">
               <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -88,6 +111,7 @@ export function ClassesList() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Edit Dialog */}
@@ -158,6 +182,18 @@ export function ClassesList() {
           </TableBody>
         </Table>
       </div>
+
+      <PaginationControls
+        currentPage={page}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalItems={totalItems}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setPage(1);
+        }}
+      />
     </div>
   );
 }

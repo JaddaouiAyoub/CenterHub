@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { getPayments, createPayment, deletePayment, updatePaymentStatus, updatePayment } from "@/actions/payments";
 import { getStudents } from "@/actions/students";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { 
   Table, 
   TableBody, 
@@ -32,10 +33,21 @@ export function PaymentManager() {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState<any>(null);
 
+  // Pagination & Search
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
   const fetchData = async () => {
     try {
-      const [p, s] = await Promise.all([getPayments(), getStudents()]);
-      if (p.payments) setPayments(p.payments);
+      const [p, s] = await Promise.all([getPayments(search, page, pageSize), getStudents()]);
+      if (p.payments) {
+        setPayments(p.payments);
+        setTotalItems(p.total || 0);
+        setTotalPages(p.totalPages || 1);
+      }
       if (p.error) toast.error(p.error);
       if (s.students) setStudents(s.students);
     } catch (error) {
@@ -46,8 +58,11 @@ export function PaymentManager() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, page, pageSize]);
 
   const handleCreatePayment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -89,14 +104,21 @@ export function PaymentManager() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-xl font-bold text-slate-900">Suivi Financier</h2>
-        <Dialog open={isPaymentOpen} onOpenChange={setIsPaymentOpen}>
-          <DialogTrigger render={
-            <Button className="bg-amber-600 hover:bg-amber-700 shadow-sm shadow-amber-200">
-              <Plus className="w-4 h-4 mr-2" /> Enregistrer un paiement
-            </Button>
-          } />
+        <div className="flex items-center space-x-2 w-full sm:w-auto">
+          <Input 
+            placeholder="Rechercher un étudiant..." 
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            className="w-full sm:w-64 border-slate-200"
+          />
+          <Dialog open={isPaymentOpen} onOpenChange={setIsPaymentOpen}>
+            <DialogTrigger render={
+              <Button className="bg-amber-600 hover:bg-amber-700 shadow-sm shadow-amber-200 whitespace-nowrap">
+                <Plus className="w-4 h-4 mr-2" /> Enregistrer un paiement
+              </Button>
+            } />
 
           <DialogContent className="sm:max-w-[425px] overflow-hidden border-none p-0 bg-white/95 backdrop-blur-xl shadow-2xl">
             <div className="bg-gradient-to-r from-amber-600 to-orange-700 p-6 text-white text-center">
@@ -183,6 +205,7 @@ export function PaymentManager() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Edit Dialog */}
@@ -346,6 +369,18 @@ export function PaymentManager() {
           </TableBody>
         </Table>
       </div>
+
+      <PaginationControls
+        currentPage={page}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalItems={totalItems}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setPage(1);
+        }}
+      />
     </div>
   );
 }

@@ -175,6 +175,28 @@ export async function getPaginatedClasses(search = "", page = 1, pageSize = 10) 
   }
 }
 
+export async function getPaginatedSubjects(search = "", page = 1, pageSize = 10) {
+  try {
+    const skip = (page - 1) * pageSize;
+    const whereClause: any = {};
+    if (search) {
+      whereClause.name = { contains: search, mode: "insensitive" };
+    }
+    const [subjects, total] = await Promise.all([
+      prisma.subject.findMany({
+        where: whereClause,
+        skip,
+        take: pageSize,
+        orderBy: { name: "asc" }
+      }),
+      prisma.subject.count({ where: whereClause })
+    ]);
+    return { subjects, total, totalPages: Math.ceil(total / pageSize) };
+  } catch (error) {
+    return { error: "Failed to fetch subjects" };
+  }
+}
+
 export async function deleteCourse(id: string) {
   try {
     await prisma.course.delete({ where: { id } });

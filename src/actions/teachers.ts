@@ -20,6 +20,31 @@ export async function getTeachers() {
   }
 }
 
+export async function getPaginatedTeachers(search = "", page = 1, pageSize = 10) {
+  try {
+    const skip = (page - 1) * pageSize;
+    const whereClause: any = { role: Role.TEACHER };
+    if (search) {
+      whereClause.name = { contains: search, mode: "insensitive" };
+    }
+    const [teachers, total] = await Promise.all([
+      prisma.user.findMany({
+        where: whereClause,
+        skip,
+        take: pageSize,
+        include: {
+          teacherProfile: true
+        },
+        orderBy: { createdAt: "desc" }
+      }),
+      prisma.user.count({ where: whereClause })
+    ]);
+    return { teachers, total, totalPages: Math.ceil(total / pageSize) };
+  } catch (error) {
+    return { error: "Failed to fetch teachers" };
+  }
+}
+
 export async function createTeacher(formData: FormData) {
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
