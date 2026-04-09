@@ -19,7 +19,8 @@ export async function getPayments(search = "", page = 1, pageSize = 10) {
         skip,
         take: pageSize,
         include: {
-          student: { include: { user: true } }
+          student: { include: { user: true } },
+          courses: { include: { subject: true } }
         },
         orderBy: { date: "desc" }
       }),
@@ -38,6 +39,7 @@ export async function createPayment(formData: FormData) {
   const year = parseInt(formData.get("year") as string);
   const status = formData.get("status") as string;
   const method = formData.get("method") as string;
+  const courseIds = formData.getAll("courseIds") as string[];
 
   if (!studentId || isNaN(amount) || isNaN(month) || isNaN(year) || !status) {
     return { error: "Missing required fields" };
@@ -51,7 +53,10 @@ export async function createPayment(formData: FormData) {
         month,
         year,
         status,
-        method: method || "CASH"
+        method: method || "CASH",
+        courses: {
+          connect: courseIds.filter(Boolean).map(id => ({ id }))
+        }
       }
     });
 
@@ -82,6 +87,7 @@ export async function updatePayment(id: string, formData: FormData) {
   const year = parseInt(formData.get("year") as string);
   const status = formData.get("status") as string;
   const method = formData.get("method") as string;
+  const courseIds = formData.getAll("courseIds") as string[];
 
   try {
     await prisma.payment.update({
@@ -92,7 +98,10 @@ export async function updatePayment(id: string, formData: FormData) {
         month,
         year,
         status,
-        method
+        method,
+        courses: {
+          set: courseIds.filter(Boolean).map(id => ({ id }))
+        }
       }
     });
 

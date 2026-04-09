@@ -226,4 +226,34 @@ export async function deleteClass(id: string) {
     return { error: "Failed to delete class" };
   }
 }
+export async function getStudentAvailableCourses(studentId: string) {
+  try {
+    const student = await prisma.studentProfile.findUnique({
+      where: { id: studentId },
+      include: {
+        classes: {
+          include: {
+            courses: {
+              include: {
+                subject: true
+              }
+            }
+          }
+        }
+      }
+    });
 
+    if (!student) return [];
+
+    // Flatten all courses from all classes
+    const allCourses = student.classes.flatMap(cl => cl.courses);
+    
+    // De-duplicate if necessary (shouldn't happen with current schema but good practice)
+    const uniqueCourses = Array.from(new Map(allCourses.map(c => [c.id, c])).values());
+    
+    return uniqueCourses;
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+}

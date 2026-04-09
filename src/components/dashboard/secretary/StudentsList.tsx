@@ -33,6 +33,7 @@ export function StudentsList() {
 
   const [subjects, setSubjects] = useState<any[]>([]);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+  const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
 
   // Pagination & Search
   const [search, setSearch] = useState("");
@@ -74,6 +75,7 @@ export function StudentsList() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     selectedSubjects.forEach(id => formData.append("subjectIds", id));
+    selectedClasses.forEach(id => formData.append("classIds", id));
     
     const res = await registerStudent(formData);
     if (res.success) {
@@ -90,6 +92,7 @@ export function StudentsList() {
     const formData = new FormData(e.currentTarget);
     if (!showPassword) formData.delete("password");
     selectedSubjects.forEach(id => formData.append("subjectIds", id));
+    selectedClasses.forEach(id => formData.append("classIds", id));
     
     const res = await updateStudent(editingStudent.id, formData);
     if (res.success) {
@@ -127,7 +130,10 @@ export function StudentsList() {
           />
           <Dialog open={isRegisterOpen} onOpenChange={(open) => {
             setIsRegisterOpen(open);
-            if(open) setSelectedSubjects([]);
+            if(open) {
+              setSelectedSubjects([]);
+              setSelectedClasses([]);
+            }
           }}>
             <DialogTrigger render={
               <Button className="bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-200 whitespace-nowrap">
@@ -162,19 +168,13 @@ export function StudentsList() {
                   <Input name="dateOfBirth" type="date" className="border-slate-200 focus:ring-emerald-500" />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-600">Classe</Label>
-                  <Select name="classId">
-                    <SelectTrigger className="border-slate-200">
-                      <SelectValue placeholder="Choisir">
-                        {(val: any) => val ? classes.find(c => c.id?.toString() === val.toString())?.name || val : "Choisir"}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {classes.map(c => (
-                        <SelectItem key={c.id} value={c.id?.toString()} label={c.name}>{c.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label className="text-slate-600">Classes</Label>
+                  <MultiSelect 
+                    options={classes.map(c => ({ id: c.id, name: c.name }))}
+                    selectedIds={selectedClasses}
+                    onChange={setSelectedClasses}
+                    placeholder="Sélectionner les classes"
+                  />
                 </div>
               </div>
               <div className="space-y-2">
@@ -226,19 +226,14 @@ export function StudentsList() {
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-600">Classe</Label>
-                <Select key={`class-${editingStudent?.id}`} name="classId" defaultValue={editingStudent?.studentProfile?.classId?.toString() || ""}>
-                  <SelectTrigger className="border-slate-200">
-                    <SelectValue placeholder="Choisir la classe">
-                      {(val: any) => val ? classes.find(c => c.id?.toString() === val.toString())?.name || val : "Choisir la classe"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {classes.map(c => (
-                      <SelectItem key={c.id} value={c.id?.toString()} label={c.name}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label className="text-slate-600">Classes</Label>
+                <MultiSelect 
+                  key={`classes-${editingStudent?.id}`}
+                  options={classes.map(c => ({ id: c.id, name: c.name }))}
+                  selectedIds={selectedClasses}
+                  onChange={setSelectedClasses}
+                  placeholder="Sélectionner les classes"
+                />
               </div>
             </div>
 
@@ -307,9 +302,17 @@ export function StudentsList() {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col space-y-1">
-                      <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 px-3 w-fit">
-                        {s.studentProfile?.class?.name || "Non assigné"}
-                      </Badge>
+                      {s.studentProfile?.classes && s.studentProfile.classes.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {s.studentProfile.classes.map((cl: any) => (
+                            <Badge key={cl.id} variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 px-2 py-0 font-medium">
+                              {cl.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-400 italic">Non assigné</span>
+                      )}
                       {s.studentProfile?.subjects && s.studentProfile.subjects.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
                           {s.studentProfile.subjects.map((sub: any) => (
@@ -332,6 +335,7 @@ export function StudentsList() {
                       onClick={() => {
                         setEditingStudent(s);
                         setSelectedSubjects(s.studentProfile?.subjects?.map((sub:any) => sub.id) || []);
+                        setSelectedClasses(s.studentProfile?.classes?.map((cl:any) => cl.id) || []);
                       }}
                     >
                       <Edit className="w-4 h-4" />

@@ -48,8 +48,7 @@ model StudentProfile {
   userId      String       @unique
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   dateOfBirth DateTime?
-  classId     String?
-  class       Class?       @relation(fields: [classId], references: [id])
+  classes     Class[]
   enrollments Enrollment[]
   payments    Payment[]
   attendance  Attendance[]
@@ -85,6 +84,7 @@ model Course {
   meetingLink String?      // e.g., "https://zoom.us/j/123456"
 
   attendance Attendance[]
+  payments   Payment[]
 }
 
 model Enrollment {
@@ -115,5 +115,6 @@ model Payment {
   year      Int
   status    String         // "PAID", "PENDING", "PARTIAL"
   method    String?        // "CASH", "CARD", "TRANSFER"
+  courses   Course[]
 }
 

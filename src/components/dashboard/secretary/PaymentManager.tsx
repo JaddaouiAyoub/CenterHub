@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import { getPayments, createPayment, deletePayment, updatePaymentStatus, updatePayment } from "@/actions/payments";
 import { getStudents } from "@/actions/students";
+import { getStudentAvailableCourses } from "@/actions/courses";
 import { PaginationControls } from "@/components/ui/pagination-controls";
+import { MultiSelect } from "@/components/ui/multi-select";
 import { 
   Table, 
   TableBody, 
@@ -32,6 +34,10 @@ export function PaymentManager() {
   const [loading, setLoading] = useState(true);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState<any>(null);
+  
+  const [selectedStudentId, setSelectedStudentId] = useState<string>("");
+  const [studentCourses, setStudentCourses] = useState<any[]>([]);
+  const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
 
   // Pagination & Search
   const [search, setSearch] = useState("");
@@ -64,9 +70,22 @@ export function PaymentManager() {
     return () => clearTimeout(timer);
   }, [search, page, pageSize]);
 
+  useEffect(() => {
+    const fetchStudentCourses = async () => {
+      if (selectedStudentId) {
+        const courses = await getStudentAvailableCourses(selectedStudentId);
+        setStudentCourses(courses || []);
+      } else {
+        setStudentCourses([]);
+      }
+    };
+    fetchStudentCourses();
+  }, [selectedStudentId]);
+
   const handleCreatePayment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    selectedCourses.forEach(id => formData.append("courseIds", id));
     const res = await createPayment(formData);
     if (res.success) {
       toast.success("Paiement enregistré");
@@ -80,6 +99,7 @@ export function PaymentManager() {
   const handleUpdatePayment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    selectedCourses.forEach(id => formData.append("courseIds", id));
     const res = await updatePayment(editingPayment.id, formData);
     if (res.success) {
       toast.success("Paiement mis à jour");
@@ -113,7 +133,13 @@ export function PaymentManager() {
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full sm:w-64 border-slate-200"
           />
-          <Dialog open={isPaymentOpen} onOpenChange={setIsPaymentOpen}>
+          <Dialog open={isPaymentOpen} onOpenChange={(open) => {
+            setIsPaymentOpen(open);
+            if(open) {
+              setSelectedStudentId("");
+              setSelectedCourses([]);
+            }
+          }}>
             <DialogTrigger render={
               <Button className="bg-amber-600 hover:bg-amber-700 shadow-sm shadow-amber-200 whitespace-nowrap">
                 <Plus className="w-4 h-4 mr-2" /> Enregistrer un paiement
@@ -131,7 +157,11 @@ export function PaymentManager() {
             <form onSubmit={handleCreatePayment} className="p-6 space-y-4 bg-white">
               <div className="space-y-2">
                 <Label className="text-slate-600">Étudiant</Label>
-                <Select name="studentId" required>
+                <Select 
+                  name="studentId" 
+                  required 
+                  onValueChange={(val: string | null) => setSelectedStudentId(val || "")}
+                >
                   <SelectTrigger className="border-slate-200">
                     <SelectValue placeholder="Choisir l'étudiant">
                       {(val: any) => val ? students.find(s => s.studentProfile?.id?.toString() === val.toString())?.name || val : "Choisir l'étudiant"}
@@ -139,11 +169,23 @@ export function PaymentManager() {
                   </SelectTrigger>
                   <SelectContent>
                     {students.map(s => (
-                      <SelectItem key={s.studentProfile?.id} value={s.studentProfile?.id?.toString()} label={s.name}>{s.name}</SelectItem>
+                      <SelectItem key={s.studentProfile?.id} value={s.studentProfile?.id?.toString()} label={s.name}>{s.name || s.user?.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+
+              {selectedStudentId && (
+                <div className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <Label className="text-slate-600">Cours Concernés</Label>
+                  <MultiSelect 
+                    options={studentCourses.map(c => ({ id: c.id, name: `${c.subject.name} - ${c.name}` }))}
+                    selectedIds={selectedCourses}
+                    onChange={setSelectedCourses}
+                    placeholder="Choisir les cours"
+                  />
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-slate-600">Montant (DHS)</Label>
@@ -229,10 +271,21 @@ export function PaymentManager() {
                 </SelectTrigger>
                 <SelectContent>
                   {students.map(s => (
-                    <SelectItem key={s.studentProfile?.id} value={s.studentProfile?.id?.toString()} label={s.name || s.user.name}>{s.name || s.user.name}</SelectItem>
+                    <SelectItem key={s.studentProfile?.id} value={s.studentProfile?.id?.toString()} label={s.name || s.user?.name}>{s.name || s.user?.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-slate-600">Cours Concernés</Label>
+              <MultiSelect 
+                key={`courses-${editingPayment?.id}`}
+                options={studentCourses.map(c => ({ id: c.id, name: `${c.subject.name} - ${c.name}` }))}
+                selectedIds={selectedCourses}
+                onChange={setSelectedCourses}
+                placeholder="Choisir les cours"
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -320,7 +373,18 @@ export function PaymentManager() {
                       <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 text-xs font-bold">
                         {p.student.user.name.charAt(0)}
                       </div>
-                      <span>{p.student.user.name}</span>
+                      <div className="flex flex-col">
+                        <span>{p.student.user.name}</span>
+                        {p.courses && p.courses.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {p.courses.map((c: any) => (
+                              <Badge key={c.id} variant="secondary" className="text-[9px] px-1 py-0 font-normal bg-slate-100 text-slate-500 border-none">
+                                {c.subject.name}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell className="text-slate-600">
@@ -350,7 +414,11 @@ export function PaymentManager() {
                       variant="ghost" 
                       size="icon" 
                       className="text-slate-400 hover:text-amber-600 hover:bg-amber-50"
-                      onClick={() => setEditingPayment(p)}
+                      onClick={() => {
+                        setEditingPayment(p);
+                        setSelectedStudentId(p.studentId);
+                        setSelectedCourses(p.courses?.map((c: any) => c.id) || []);
+                      }}
                     >
                       <Edit className="w-4 h-4" />
                     </Button>

@@ -22,7 +22,7 @@ export async function getStudents(search = "", page = 1, pageSize = 10) {
         include: {
           studentProfile: {
             include: {
-              class: true,
+              classes: true,
               subjects: true
             }
           }
@@ -43,7 +43,7 @@ export async function registerStudent(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const dateOfBirth = formData.get("dateOfBirth") as string;
-  const classId = formData.get("classId") as string;
+  const classIds = formData.getAll("classIds") as string[];
   const subjectIds = formData.getAll("subjectIds") as string[];
 
   if (!name || !email || !password) {
@@ -62,7 +62,9 @@ export async function registerStudent(formData: FormData) {
         studentProfile: {
           create: {
             dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
-            classId: classId || null,
+            classes: {
+              connect: classIds.filter(Boolean).map(id => ({ id }))
+            },
             subjects: {
               connect: subjectIds.filter(Boolean).map(id => ({ id }))
             }
@@ -86,7 +88,7 @@ export async function updateStudent(id: string, formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const dateOfBirth = formData.get("dateOfBirth") as string;
-  const classId = formData.get("classId") as string;
+  const classIds = formData.getAll("classIds") as string[];
   const subjectIds = formData.getAll("subjectIds") as string[];
 
   try {
@@ -96,7 +98,9 @@ export async function updateStudent(id: string, formData: FormData) {
       studentProfile: {
         update: {
           dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
-          classId: classId || null,
+          classes: {
+            set: classIds.filter(Boolean).map(id => ({ id }))
+          },
           subjects: {
             set: subjectIds.filter(Boolean).map(id => ({ id }))
           }
