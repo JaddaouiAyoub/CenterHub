@@ -1,0 +1,98 @@
+"use server";
+
+import prisma from "@/lib/prisma";
+import { Role } from "@prisma/client";
+import bcrypt from "bcryptjs";
+import { revalidatePath } from "next/cache";
+
+export async function getTeachers() {
+  try {
+    const teachers = await prisma.user.findMany({
+      where: { role: Role.TEACHER },
+      include: {
+        teacherProfile: true
+      },
+      orderBy: { createdAt: "desc" }
+    });
+    return { teachers };
+  } catch (error) {
+    return { error: "Failed to fetch teachers" };
+  }
+}
+
+export async function createTeacher(formData: FormData) {
+  const name = formData.get("name") as string;
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+  const specialization = formData.get("specialization") as string;
+
+  if (!name || !email || !password) {
+    return { error: "Missing required fields" };
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: Role.TEACHER,
+        teacherProfile: {
+          create: {
+            specialization
+          }
+        }
+      }
+    });
+
+    revalidatePath("/dashboard");
+    return { success: "Teacher created successfully" };
+  } catch (error: any) {
+    if (error.code === "P2002") {
+      return { error: "Email already exists" };
+    }
+    return { error: "Failed to create teacher" };
+  }
+}
+
+export async function updateTeacher(id: string, formData: FormData) {
+  const name = formData.get("name") as string;
+  const email = formData.get("email") as string;
+  const specialization = formData.get("specialization") as string;
+  const bio = formData.get("bio") as string;
+
+  try {
+    await prisma.user.update({
+      where: { id },
+      data: {
+        name,
+        email,
+        teacherProfile: {
+          update: {
+            specialization,
+            bio
+          }
+        }
+      }
+    });
+
+    revalidatePath("/dashboard");
+    return { success: "Teacher updated successfully" };
+  } catch (error) {
+    return { error: "Failed to update teacher" };
+  }
+}
+
+export async function deleteTeacher(id: string) {
+  try {
+    await prisma.user.delete({
+      where: { id }
+    });
+    revalidatePath("/dashboard");
+    return { success: "Teacher deleted successfully" };
+  } catch (error) {
+    return { error: "Failed to delete teacher" };
+  }
+}

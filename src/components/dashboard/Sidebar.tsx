@@ -11,7 +11,12 @@ import {
   LayoutDashboard,
   ShieldCheck,
   Calendar,
-  MessageSquare
+  MessageSquare,
+  GraduationCap,
+  BookOpenCheck,
+  CreditCard,
+  School,
+  Library
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -48,8 +53,13 @@ export function Sidebar({ role }: { role: string }) {
       );
     } else if (role === "SECRETARY") {
       links.push(
-        { href: `${base}/registrations`, label: "Inscriptions", icon: UserCircle },
-        { href: `${base}/billing`, label: "Facturation", icon: BarChart }
+        { href: `${base}/teachers`, label: "Enseignants", icon: Users },
+        { href: `${base}/students`, label: "Étudiants", icon: GraduationCap },
+        { href: `${base}/subjects`, label: "Matières", icon: Library },
+        { href: `${base}/classes`, label: "Classes", icon: School },
+        { href: `${base}/courses`, label: "Cours", icon: Calendar },
+        { href: `${base}/attendance`, label: "Absences", icon: BookOpenCheck },
+        { href: `${base}/payments`, label: "Facturation", icon: CreditCard }
       );
     }
 

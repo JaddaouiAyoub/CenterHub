@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   description: "Système de gestion de centre professionnel",
 };
 
+import { Toaster } from "sonner";
+
 export default async function LocaleLayout({
   children,
   params,
@@ -35,6 +37,7 @@ export default async function LocaleLayout({
       <body className={inter.className}>
         <NextIntlClientProvider messages={messages} locale={locale}>
           {children}
+          <Toaster position="top-right" richColors closeButton />
         </NextIntlClientProvider>
       </body>
     </html>
