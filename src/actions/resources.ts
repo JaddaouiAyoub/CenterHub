@@ -31,6 +31,48 @@ export async function deleteResource(id: string) {
   }
 }
 
+export async function getStudentResources(studentId: string) {
+  try {
+    const student = await prisma.studentProfile.findUnique({
+      where: { id: studentId },
+      include: {
+        classes: {
+          include: {
+            courses: {
+              include: {
+                resources: true,
+                subject: true,
+                teacher: { include: { user: true } }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!student) return { resources: [] };
+
+    const resources: any[] = [];
+    student.classes.forEach(cl => {
+      cl.courses.forEach(c => {
+        c.resources.forEach(r => {
+          resources.push({
+            ...r,
+            courseName: c.name,
+            subjectName: c.subject?.name,
+            teacherName: c.teacher?.user?.name
+          });
+        });
+      });
+    });
+
+    return { resources: resources.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()) };
+  } catch (error) {
+    console.error(error);
+    return { error: "Failed to fetch student resources" };
+  }
+}
+
 
 function getResourceType(mimeType: string): string {
   if (mimeType.startsWith("image/")) return "IMAGE";
