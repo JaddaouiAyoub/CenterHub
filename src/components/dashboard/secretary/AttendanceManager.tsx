@@ -90,13 +90,11 @@ export function AttendanceManager() {
             <Label className="text-slate-600 font-medium">Cours / Session</Label>
             <Select onValueChange={(val) => setSelectedCourse(val)} value={selectedCourse || undefined}>
               <SelectTrigger className="border-slate-200 focus:ring-indigo-500 rounded-lg h-11">
-                <SelectValue placeholder="Choisir un cours">
-                  {(val: any) => val ? (courses.find(c => c.id?.toString() === val.toString()) ? `${courses.find(c => c.id?.toString() === val.toString())?.subject?.name} - ${courses.find(c => c.id?.toString() === val.toString())?.class?.name} (${courses.find(c => c.id?.toString() === val.toString())?.startTime})` : val) : "Choisir un cours"}
-                </SelectValue>
+                <SelectValue placeholder="Choisir un cours" />
               </SelectTrigger>
               <SelectContent>
                 {courses.map(c => (
-                  <SelectItem key={c.id} value={c.id?.toString()} label={`${c.subject.name} - ${c.class.name} (${c.startTime})`}>
+                  <SelectItem key={c.id} value={c.id?.toString()}>
                     {c.subject.name} - {c.class.name} ({c.startTime})
                   </SelectItem>
                 ))}

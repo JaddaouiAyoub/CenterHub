@@ -146,7 +146,7 @@ export function PaymentManager() {
               </Button>
             } />
 
-          <DialogContent className="sm:max-w-[425px] overflow-hidden border-none p-0 bg-white/95 backdrop-blur-xl shadow-2xl">
+          <DialogContent className="sm:max-w-2xl overflow-hidden border-none p-0 bg-white/95 backdrop-blur-xl shadow-2xl">
             <div className="bg-gradient-to-r from-amber-600 to-orange-700 p-6 text-white text-center">
               <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Wallet className="w-6 h-6 text-white" />
@@ -163,13 +163,11 @@ export function PaymentManager() {
                   onValueChange={(val: string | null) => setSelectedStudentId(val || "")}
                 >
                   <SelectTrigger className="border-slate-200">
-                    <SelectValue placeholder="Choisir l'étudiant">
-                      {(val: any) => val ? students.find(s => s.studentProfile?.id?.toString() === val.toString())?.name || val : "Choisir l'étudiant"}
-                    </SelectValue>
+                    <SelectValue placeholder="Choisir l'étudiant" />
                   </SelectTrigger>
                   <SelectContent>
                     {students.map(s => (
-                      <SelectItem key={s.studentProfile?.id} value={s.studentProfile?.id?.toString()} label={s.name}>{s.name || s.user?.name}</SelectItem>
+                      <SelectItem key={s.studentProfile?.id} value={s.studentProfile?.id?.toString()}>{s.name || s.user?.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -195,14 +193,12 @@ export function PaymentManager() {
                   <Label className="text-slate-600">Moyen</Label>
                   <Select name="method" defaultValue="CASH">
                     <SelectTrigger className="border-slate-200">
-                      <SelectValue>
-                        {(val: any) => val === "CASH" ? "Espèces" : val === "CARD" ? "Carte" : val === "TRANSFER" ? "Virement" : val}
-                      </SelectValue>
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="CASH" label="Espèces">Espèces</SelectItem>
-                      <SelectItem value="CARD" label="Carte">Carte</SelectItem>
-                      <SelectItem value="TRANSFER" label="Virement">Virement</SelectItem>
+                      <SelectItem value="CASH">Espèces</SelectItem>
+                      <SelectItem value="CARD">Carte</SelectItem>
+                      <SelectItem value="TRANSFER">Virement</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -212,13 +208,11 @@ export function PaymentManager() {
                   <Label className="text-slate-600">Mois</Label>
                   <Select name="month" defaultValue={(new Date().getMonth() + 1).toString()}>
                     <SelectTrigger className="border-slate-200">
-                      <SelectValue placeholder="Mois">
-                        {(val: any) => val ? MONTHS[parseInt(val, 10) - 1] || val : "Mois"}
-                      </SelectValue>
+                      <SelectValue placeholder="Mois" />
                     </SelectTrigger>
                     <SelectContent>
                       {MONTHS.map((m, i) => (
-                        <SelectItem key={i} value={(i + 1).toString()} label={m}>{m}</SelectItem>
+                        <SelectItem key={i} value={(i + 1).toString()}>{m}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -232,14 +226,12 @@ export function PaymentManager() {
                 <Label className="text-slate-600">Statut</Label>
                 <Select name="status" defaultValue="PAID">
                   <SelectTrigger className="border-slate-200">
-                    <SelectValue>
-                      {(val: any) => val === "PAID" ? "Payé" : val === "PENDING" ? "En attente" : val === "PARTIAL" ? "Partiel" : val}
-                    </SelectValue>
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="PAID" label="Payé">Payé</SelectItem>
-                    <SelectItem value="PENDING" label="En attente">En attente</SelectItem>
-                    <SelectItem value="PARTIAL" label="Partiel">Partiel</SelectItem>
+                    <SelectItem value="PAID">Payé</SelectItem>
+                    <SelectItem value="PENDING">En attente</SelectItem>
+                    <SelectItem value="PARTIAL">Partiel</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -296,14 +288,12 @@ export function PaymentManager() {
                 <Label className="text-slate-600">Moyen</Label>
                 <Select key={`method-${editingPayment?.id}`} name="method" defaultValue={editingPayment?.method}>
                   <SelectTrigger className="border-slate-200">
-                    <SelectValue>
-                      {(val: any) => val === "CASH" ? "Espèces" : val === "CARD" ? "Carte" : val === "TRANSFER" ? "Virement" : val}
-                    </SelectValue>
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="CASH" label="Espèces">Espèces</SelectItem>
-                    <SelectItem value="CARD" label="Carte">Carte</SelectItem>
-                    <SelectItem value="TRANSFER" label="Virement">Virement</SelectItem>
+                    <SelectItem value="CASH">Espèces</SelectItem>
+                    <SelectItem value="CARD">Carte</SelectItem>
+                    <SelectItem value="TRANSFER">Virement</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -313,13 +303,11 @@ export function PaymentManager() {
                 <Label className="text-slate-600">Mois</Label>
                 <Select key={`month-${editingPayment?.id}`} name="month" defaultValue={editingPayment?.month?.toString()}>
                   <SelectTrigger className="border-slate-200">
-                    <SelectValue placeholder="Mois">
-                      {(val: any) => val ? MONTHS[parseInt(val, 10) - 1] || val : "Mois"}
-                    </SelectValue>
+                    <SelectValue placeholder="Mois" />
                   </SelectTrigger>
                   <SelectContent>
                     {MONTHS.map((m, i) => (
-                      <SelectItem key={i} value={(i + 1).toString()} label={m}>{m}</SelectItem>
+                      <SelectItem key={i} value={(i + 1).toString()}>{m}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -333,14 +321,12 @@ export function PaymentManager() {
               <Label className="text-slate-600">Statut</Label>
               <Select key={`status-${editingPayment?.id}`} name="status" defaultValue={editingPayment?.status}>
                 <SelectTrigger className="border-slate-200">
-                  <SelectValue>
-                    {(val: any) => val === "PAID" ? "Payé" : val === "PENDING" ? "En attente" : val === "PARTIAL" ? "Partiel" : val}
-                  </SelectValue>
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="PAID" label="Payé">Payé</SelectItem>
-                  <SelectItem value="PENDING" label="En attente">En attente</SelectItem>
-                  <SelectItem value="PARTIAL" label="Partiel">Partiel</SelectItem>
+                  <SelectItem value="PAID">Payé</SelectItem>
+                  <SelectItem value="PENDING">En attente</SelectItem>
+                  <SelectItem value="PARTIAL">Partiel</SelectItem>
                 </SelectContent>
               </Select>
             </div>

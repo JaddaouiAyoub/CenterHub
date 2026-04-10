@@ -141,7 +141,7 @@ export function StudentsList() {
               </Button>
             } />
 
-          <DialogContent className="sm:max-w-[425px] overflow-hidden border-none p-0 bg-white/95 backdrop-blur-xl shadow-2xl">
+          <DialogContent className="sm:max-w-2xl overflow-hidden border-none p-0 bg-white/95 backdrop-blur-xl shadow-2xl">
             <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 text-white text-center">
               <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
                 <UserPlus className="w-6 h-6 text-white" />
@@ -150,23 +150,27 @@ export function StudentsList() {
               <p className="text-emerald-100 text-sm mt-1">Inscription d'un nouvel élève au centre.</p>
             </div>
             <form onSubmit={handleRegister} className="p-6 space-y-4 bg-white">
-              <div className="space-y-2">
-                <Label className="text-slate-600">Nom Complet</Label>
-                <Input name="name" placeholder="Prénom Nom" required className="border-slate-200 focus:ring-emerald-500" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-slate-600">Nom Complet</Label>
+                  <Input name="name" placeholder="Prénom Nom" required className="border-slate-200 focus:ring-emerald-500" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-slate-600">Email (Connexion)</Label>
+                  <Input name="email" type="email" placeholder="student@example.com" required className="border-slate-200 focus:ring-emerald-500" />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label className="text-slate-600">Email (Connexion)</Label>
-                <Input name="email" type="email" placeholder="student@example.com" required className="border-slate-200 focus:ring-emerald-500" />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-slate-600">Mot de Passe</Label>
-                <Input name="password" type="password" required className="border-slate-200 focus:ring-emerald-500" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-slate-600">Mot de Passe</Label>
+                  <Input name="password" type="password" required className="border-slate-200 focus:ring-emerald-500" />
+                </div>
                 <div className="space-y-2">
                   <Label className="text-slate-600">Date de Naissance</Label>
                   <Input name="dateOfBirth" type="date" className="border-slate-200 focus:ring-emerald-500" />
                 </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-slate-600">Classes</Label>
                   <MultiSelect 
@@ -176,15 +180,15 @@ export function StudentsList() {
                     placeholder="Sélectionner les classes"
                   />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-slate-600">Matières</Label>
-                <MultiSelect 
-                  options={subjects.map(s => ({ id: s.id, name: s.name }))}
-                  selectedIds={selectedSubjects}
-                  onChange={setSelectedSubjects}
-                  placeholder="Sélectionner les matières"
-                />
+                <div className="space-y-2">
+                  <Label className="text-slate-600">Matières</Label>
+                  <MultiSelect 
+                    options={subjects.map(s => ({ id: s.id, name: s.name }))}
+                    selectedIds={selectedSubjects}
+                    onChange={setSelectedSubjects}
+                    placeholder="Sélectionner les matières"
+                  />
+                </div>
               </div>
               <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 h-12">Inscrire l'étudiant</Button>
             </form>
@@ -206,15 +210,17 @@ export function StudentsList() {
             <p className="text-emerald-100 text-sm mt-1">Mise à jour des informations de {editingStudent?.name}.</p>
           </div>
           <form onSubmit={handleUpdate} className="p-6 space-y-4 bg-white">
-            <div className="space-y-2">
-              <Label className="text-slate-600">Nom Complet</Label>
-              <Input key={`name-${editingStudent?.id}`} name="name" defaultValue={editingStudent?.name} required className="border-slate-200 focus:ring-emerald-500" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-slate-600">Nom Complet</Label>
+                <Input key={`name-${editingStudent?.id}`} name="name" defaultValue={editingStudent?.name} required className="border-slate-200 focus:ring-emerald-500" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-600">Email</Label>
+                <Input key={`email-${editingStudent?.id}`} name="email" type="email" defaultValue={editingStudent?.email} required className="border-slate-200 focus:ring-emerald-500" />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label className="text-slate-600">Email</Label>
-              <Input key={`email-${editingStudent?.id}`} name="email" type="email" defaultValue={editingStudent?.email} required className="border-slate-200 focus:ring-emerald-500" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-slate-600">Naissance</Label>
                 <Input 

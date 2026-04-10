@@ -164,7 +164,7 @@ export function CourseScheduler() {
               </Button>
             } />
 
-            <DialogContent className="sm:max-w-[500px] overflow-hidden border-none p-0 bg-white/95 backdrop-blur-xl shadow-2xl">
+            <DialogContent className="sm:max-w-2xl overflow-hidden border-none p-0 bg-white/95 backdrop-blur-xl shadow-2xl">
               <div className="bg-gradient-to-r from-purple-600 to-indigo-700 p-6 text-white text-center">
                 <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
                   <Calendar className="w-6 h-6 text-white" />
@@ -173,22 +173,35 @@ export function CourseScheduler() {
                 <p className="text-purple-100 text-sm mt-1">Définissez un créneau dans le calendrier scolaire.</p>
               </div>
               <form onSubmit={handleCreateCourse} className="p-6 space-y-4 bg-white">
-                <div className="space-y-2">
-                  <Label className="text-slate-600">Nom du cours / Description</Label>
-                  <Input name="name" placeholder="Ex: Soutien Mathématiques" required className="border-slate-200 focus:ring-purple-500" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-slate-600">Nom du cours / Description</Label>
+                    <Input name="name" placeholder="Ex: Soutien Mathématiques" required className="border-slate-200 focus:ring-purple-500" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-600">Classe / Groupe</Label>
+                    <Select name="classId">
+                      <SelectTrigger className="border-slate-200">
+                        <SelectValue placeholder="Choisir la classe" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {classes.map(c => (
+                          <SelectItem key={c.id} value={c.id?.toString()}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-slate-600">Enseignant</Label>
                     <Select name="teacherId">
                       <SelectTrigger className="border-slate-200">
-                        <SelectValue placeholder="Facultatif">
-                          {(val: any) => val ? teachers.find(t => t.teacherProfile?.id?.toString() === val.toString())?.name || val : "Facultatif"}
-                        </SelectValue>
+                        <SelectValue placeholder="Facultatif" />
                       </SelectTrigger>
                       <SelectContent>
                         {teachers.map(t => (
-                          <SelectItem key={t.teacherProfile?.id} value={t.teacherProfile?.id?.toString() || ""} label={t.name}>{t.name}</SelectItem>
+                          <SelectItem key={t.teacherProfile?.id} value={t.teacherProfile?.id?.toString() || ""}>{t.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -197,45 +210,26 @@ export function CourseScheduler() {
                     <Label className="text-slate-600">Matière</Label>
                     <Select name="subjectId">
                       <SelectTrigger className="border-slate-200">
-                        <SelectValue placeholder="Obligatoire">
-                          {(val: any) => val ? subjects.find(s => s.id?.toString() === val.toString())?.name || val : "Obligatoire"}
-                        </SelectValue>
+                        <SelectValue placeholder="Obligatoire" />
                       </SelectTrigger>
                       <SelectContent>
                         {subjects.map(s => (
-                          <SelectItem key={s.id} value={s.id?.toString()} label={s.name}>{s.name}</SelectItem>
+                          <SelectItem key={s.id} value={s.id?.toString()}>{s.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-slate-600">Classe / Groupe</Label>
-                  <Select name="classId">
-                    <SelectTrigger className="border-slate-200">
-                      <SelectValue placeholder="Choisir la classe">
-                        {(val: any) => val ? classes.find(c => c.id?.toString() === val.toString())?.name || val : "Choisir la classe"}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {classes.map(c => (
-                        <SelectItem key={c.id} value={c.id?.toString()} label={c.name}>{c.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label className="text-slate-600">Jour</Label>
                     <Select name="day">
                       <SelectTrigger className="border-slate-200">
-                        <SelectValue placeholder="Jour">
-                          {(val: any) => val ? DAYS[(parseInt(val, 10) + 6) % 7] || val : "Jour"}
-                        </SelectValue>
+                        <SelectValue placeholder="Jour" />
                       </SelectTrigger>
                       <SelectContent>
                         {DAYS.map((d, i) => (
-                          <SelectItem key={i} value={((i + 1) % 7).toString()} label={d}>{d}</SelectItem>
+                          <SelectItem key={i} value={((i + 1) % 7).toString()}>{d}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -272,18 +266,35 @@ export function CourseScheduler() {
             <p className="text-indigo-100 text-sm mt-1">Mise à jour du créneau pour {editingCourse?.name}.</p>
           </div>
           <form onSubmit={handleUpdateCourse} className="p-6 space-y-4 bg-white">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-slate-600">Nom du cours / Description</Label>
+                <Input name="name" defaultValue={editingCourse?.name} required className="border-slate-200 focus:ring-purple-500" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-600">Classe</Label>
+                <Select key={`class-${editingCourse?.id}`} name="classId" defaultValue={editingCourse?.classId?.toString() || ""}>
+                  <SelectTrigger className="border-slate-200">
+                    <SelectValue placeholder="Choisir" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {classes.map(c => (
+                      <SelectItem key={c.id} value={c.id?.toString()}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-slate-600">Enseignant</Label>
                 <Select key={`teacher-${editingCourse?.id}`} name="teacherId" defaultValue={editingCourse?.teacherId?.toString() || ""}>
                   <SelectTrigger className="border-slate-200">
-                    <SelectValue placeholder="Choisir">
-                      {(val: any) => val ? teachers.find(t => t.teacherProfile?.id?.toString() === val.toString())?.name || val : "Choisir"}
-                    </SelectValue>
+                    <SelectValue placeholder="Choisir" />
                   </SelectTrigger>
                   <SelectContent>
                     {teachers.map(t => (
-                      <SelectItem key={t.teacherProfile?.id} value={t.teacherProfile?.id?.toString() || ""} label={t.name}>{t.name}</SelectItem>
+                      <SelectItem key={t.teacherProfile?.id} value={t.teacherProfile?.id?.toString() || ""}>{t.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -292,45 +303,26 @@ export function CourseScheduler() {
                 <Label className="text-slate-600">Matière</Label>
                 <Select key={`subject-${editingCourse?.id}`} name="subjectId" defaultValue={editingCourse?.subjectId?.toString() || ""}>
                   <SelectTrigger className="border-slate-200">
-                    <SelectValue placeholder="Choisir">
-                      {(val: any) => val ? subjects.find(s => s.id?.toString() === val.toString())?.name || val : "Choisir"}
-                    </SelectValue>
+                    <SelectValue placeholder="Choisir" />
                   </SelectTrigger>
                   <SelectContent>
                     {subjects.map(s => (
-                      <SelectItem key={s.id} value={s.id?.toString()} label={s.name}>{s.name}</SelectItem>
+                      <SelectItem key={s.id} value={s.id?.toString()}>{s.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-slate-600">Classe</Label>
-              <Select key={`class-${editingCourse?.id}`} name="classId" defaultValue={editingCourse?.classId?.toString() || ""}>
-                <SelectTrigger className="border-slate-200">
-                  <SelectValue placeholder="Choisir">
-                    {(val: any) => val ? classes.find(c => c.id?.toString() === val.toString())?.name || val : "Choisir"}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {classes.map(c => (
-                    <SelectItem key={c.id} value={c.id?.toString()} label={c.name}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label className="text-slate-600">Jour</Label>
                 <Select key={`day-${editingCourse?.id}`} name="day" defaultValue={editingCourse?.day?.toString() || ""}>
                   <SelectTrigger className="border-slate-200">
-                    <SelectValue placeholder="Choisir">
-                      {(val: any) => val ? DAYS[(parseInt(val, 10) + 6) % 7] || val : "Choisir"}
-                    </SelectValue>
+                    <SelectValue placeholder="Choisir" />
                   </SelectTrigger>
                   <SelectContent>
                     {DAYS.map((d, i) => (
-                      <SelectItem key={i} value={((i + 1) % 7).toString()} label={d}>{d}</SelectItem>
+                      <SelectItem key={i} value={((i + 1) % 7).toString()}>{d}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

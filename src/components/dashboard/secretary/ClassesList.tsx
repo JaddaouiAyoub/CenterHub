@@ -94,7 +94,7 @@ export function ClassesList() {
                 <Plus className="w-4 h-4 mr-2" /> Nouvelle Classe
               </Button>
             } />
-          <DialogContent className="sm:max-w-[425px] overflow-hidden border-none p-0 bg-white/95 backdrop-blur-xl shadow-2xl">
+          <DialogContent className="sm:max-w-xl overflow-hidden border-none p-0 bg-white/95 backdrop-blur-xl shadow-2xl">
             <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 text-white text-center">
               <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
                 <School className="w-6 h-6 text-white" />
@@ -116,7 +116,7 @@ export function ClassesList() {
 
       {/* Edit Dialog */}
       <Dialog open={!!editingClass} onOpenChange={(open) => !open && setEditingClass(null)}>
-        <DialogContent className="sm:max-w-[425px] overflow-hidden border-none p-0 bg-white/95 backdrop-blur-xl shadow-2xl">
+        <DialogContent className="sm:max-w-xl overflow-hidden border-none p-0 bg-white/95 backdrop-blur-xl shadow-2xl">
           <div className="bg-gradient-to-r from-teal-600 to-emerald-700 p-6 text-white text-center">
             <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
               <Edit className="w-6 h-6 text-white" />
