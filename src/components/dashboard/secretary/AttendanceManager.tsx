@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getCourses } from "@/actions/courses";
+import { getCoursesForAttendance } from "@/actions/courses";
 import { getStudentsForCourse, markAttendance, getAttendanceByCourse } from "@/actions/attendance";
 import { 
   Table, 
@@ -28,11 +28,16 @@ export function AttendanceManager() {
 
   useEffect(() => {
     const fetchCourses = async () => {
-      const res = await getCourses();
+      const date = new Date(selectedDate);
+      date.setHours(0, 0, 0, 0);
+      const res = await getCoursesForAttendance(date);
       if (res.courses) setCourses(res.courses);
+      if (res.courses && !res.courses.find(c => c.id === selectedCourse)) {
+        setSelectedCourse(null);
+      }
     };
     fetchCourses();
-  }, []);
+  }, [selectedDate]);
 
   const handleSearch = async () => {
     if (!selectedCourse || !selectedDate) return;

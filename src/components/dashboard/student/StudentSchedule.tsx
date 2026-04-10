@@ -10,7 +10,9 @@ import {
   ChevronRight,
   FileText
 } from "lucide-react";
+import { getStudentSchedule } from "@/actions/students";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
@@ -25,13 +27,17 @@ import { ResourceManager } from "../teacher/ResourceManager";
 const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
 export function StudentSchedule({ profile }: { profile: any }) {
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const getStartOfWeek = (d: Date) => {
     const date = new Date(d);
     const day = date.getDay();
     const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-    return new Date(date.setDate(diff));
+    const result = new Date(date.setDate(diff));
+    result.setHours(0, 0, 0, 0); // Normalize to midnight
+    return result;
   };
 
   const startOfWeek = getStartOfWeek(currentDate);
@@ -46,8 +52,27 @@ export function StudentSchedule({ profile }: { profile: any }) {
     return d.toLocaleDateString("fr-FR", { day: 'numeric', month: 'long', year: 'numeric' });
   };
 
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      setLoading(true);
+      try {
+        const res = await getStudentSchedule(profile.userId, startOfWeek);
+        if (res.courses) {
+          setCourses(res.courses);
+        } else {
+          toast.error(res.error || "Erreur de chargement de l'emploi du temps");
+        }
+      } catch (error) {
+        toast.error("Échec de la récupération des données");
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (profile?.userId) fetchSchedule();
+  }, [profile?.userId, currentDate]);
+
   // Group student courses by day
-  const courses = profile?.classes?.flatMap((c: any) => c.courses) || [];
   const scheduleByDay: Record<number, any[]> = {};
   courses.forEach((c: any) => {
     if (!scheduleByDay[c.day]) scheduleByDay[c.day] = [];
@@ -109,7 +134,12 @@ export function StudentSchedule({ profile }: { profile: any }) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-2 space-y-2">
-                {dayCourses.length === 0 ? (
+                {loading ? (
+                  <div className="py-8 text-center flex flex-col items-center">
+                    <div className="w-5 h-5 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-2" />
+                    <p className="text-[10px] text-slate-400">Chargement...</p>
+                  </div>
+                ) : dayCourses.length === 0 ? (
                   <div className="py-8 text-center">
                     <p className="text-xs text-slate-400 italic">Pas de cours</p>
                   </div>
@@ -120,9 +150,16 @@ export function StudentSchedule({ profile }: { profile: any }) {
                       className="p-3 bg-white rounded-lg border border-slate-100 shadow-sm hover:border-blue-200 transition-all group"
                     >
                       <div className="flex justify-between items-start mb-2">
-                        <Badge className="bg-blue-100 text-blue-700 border-none font-bold text-[10px]">
-                          {c.subject?.name}
-                        </Badge>
+                        <div className="flex flex-col gap-1">
+                          <Badge className="bg-blue-100 text-blue-700 border-none font-bold text-[10px] w-fit">
+                            {c.subject?.name}
+                          </Badge>
+                          {c.recurrence === "ONCE" && (
+                            <Badge className="bg-amber-100 text-amber-700 border-none font-bold text-[9px] h-4 w-fit">
+                              SÉANCE UNIQUE
+                            </Badge>
+                          )}
+                        </div>
                         <div className="text-[10px] font-bold text-slate-400 flex items-center">
                           <Clock className="w-3 h-3 mr-1" />
                           {c.startTime}
@@ -146,7 +183,7 @@ export function StudentSchedule({ profile }: { profile: any }) {
                         )}
                         
                         <Dialog>
-                          <DialogTrigger asChild>
+                          <DialogTrigger render={
                             <Button 
                               variant="outline" 
                               size="sm" 
@@ -154,7 +191,7 @@ export function StudentSchedule({ profile }: { profile: any }) {
                             >
                               <FileText className="w-3 h-3 mr-2" /> Documents
                             </Button>
-                          </DialogTrigger>
+                          } />
                           <DialogContent className="sm:max-w-4xl">
                             <DialogHeader>
                               <DialogTitle>Supports de cours : {c.name}</DialogTitle>

@@ -7,9 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-
-
 enum Role {
   ADMIN
   TEACHER
@@ -56,9 +53,9 @@ model StudentProfile {
 }
 
 model Subject {
-  id      String   @id @default(cuid())
-  name    String   @unique
-  courses Course[]
+  id       String           @id @default(cuid())
+  name     String           @unique
+  courses  Course[]
   students StudentProfile[]
 }
 
@@ -69,19 +66,27 @@ model Class {
   courses  Course[]
 }
 
+enum Recurrence {
+  WEEKLY
+  ONCE
+}
+
 model Course {
-  id        String         @id @default(cuid())
-  name      String
-  teacherId String?
-  teacher   TeacherProfile? @relation(fields: [teacherId], references: [id])
-  subjectId String
-  subject   Subject        @relation(fields: [subjectId], references: [id])
-  classId   String
-  class     Class          @relation(fields: [classId], references: [id])
-  day       Int            // 0-6 (Sunday-Saturday)
-  startTime String         // e.g., "08:00"
-  endTime   String         // e.g., "10:00"
-  meetingLink String?      // e.g., "https://zoom.us/j/123456"
+  id          String          @id @default(cuid())
+  name        String
+  teacherId   String?
+  teacher     TeacherProfile? @relation(fields: [teacherId], references: [id])
+  subjectId   String
+  subject     Subject         @relation(fields: [subjectId], references: [id])
+  classId     String
+  class       Class           @relation(fields: [classId], references: [id])
+  day         Int // 0-6 (Sunday-Saturday)
+  startTime   String // e.g., "08:00"
+  endTime     String // e.g., "10:00"
+  meetingLink String? // e.g., "https://zoom.us/j/123456"
+
+  recurrence   Recurrence @default(WEEKLY)
+  specificDate DateTime?
 
   attendance Attendance[]
   payments   Payment[]
@@ -92,12 +97,11 @@ model Resource {
   id        String   @id @default(cuid())
   name      String
   url       String
-  type      String   // "PDF", "IMAGE", "VIDEO", "OTHER"
+  type      String // "PDF", "IMAGE", "VIDEO", "OTHER"
   courseId  String
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }
-
 
 model Enrollment {
   id        String         @id @default(cuid())
@@ -114,7 +118,7 @@ model Attendance {
   courseId  String
   course    Course         @relation(fields: [courseId], references: [id])
   date      DateTime
-  status    String         // "PRESENT", "ABSENT", "LATE"
+  status    String // "PRESENT", "ABSENT", "LATE"
 }
 
 model Payment {
@@ -125,8 +129,7 @@ model Payment {
   date      DateTime       @default(now())
   month     Int
   year      Int
-  status    String         // "PAID", "PENDING", "PARTIAL"
-  method    String?        // "CASH", "CARD", "TRANSFER"
+  status    String // "PAID", "PENDING", "PARTIAL"
+  method    String? // "CASH", "CARD", "TRANSFER"
   courses   Course[]
 }
-

@@ -23,7 +23,6 @@ export function StudentResources({ profile }: { profile: any }) {
   const [resources, setResources] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [selectedResource, setSelectedResource] = useState<any>(null);
 
   useEffect(() => {
     const fetchResources = async () => {
@@ -96,13 +95,19 @@ export function StudentResources({ profile }: { profile: any }) {
               </p>
 
               <div className="flex items-center space-x-2 pt-4 border-t border-slate-50">
-                <Button 
-                  size="sm" 
-                  className="flex-1 h-9 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] uppercase tracking-widest rounded-xl"
-                  onClick={() => setSelectedResource(resource)}
-                >
-                  <Eye className="w-3.5 h-3.5 mr-2" /> Ouvrir
-                </Button>
+                <DocumentViewer 
+                  id={resource.id}
+                  name={resource.name}
+                  type={resource.type}
+                  trigger={
+                    <Button 
+                      size="sm" 
+                      className="flex-1 h-9 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] uppercase tracking-widest rounded-xl"
+                    >
+                      <Eye className="w-3.5 h-3.5 mr-2" /> Ouvrir
+                    </Button>
+                  }
+                />
                 <Button 
                   size="icon" 
                   variant="outline" 
@@ -126,12 +131,6 @@ export function StudentResources({ profile }: { profile: any }) {
         )}
       </div>
 
-      {selectedResource && (
-        <DocumentViewer 
-          resource={selectedResource}
-          onClose={() => setSelectedResource(null)}
-        />
-      )}
     </div>
   );
 }

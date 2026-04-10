@@ -132,9 +132,9 @@ export function StudentView({ user }: { user: User }) {
                 <CardTitle className="text-lg font-black font-heading flex items-center">
                   <Calendar className="w-5 h-5 mr-3 text-blue-600" /> Mon Emploi du Temps
                 </CardTitle>
-                <Button variant="ghost" size="sm" className="text-blue-600 font-bold text-xs" asChild>
+                <Button variant="ghost" size="xs" className="text-blue-600 font-bold text-xs" render={
                    <Link href={`/${locale}/dashboard/schedule`}>Voir tout <ChevronRight className="w-4 h-4 ml-1" /></Link>
-                </Button>
+                } />
               </div>
             </CardHeader>
             <CardContent className="p-0">

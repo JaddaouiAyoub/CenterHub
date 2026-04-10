@@ -95,6 +95,13 @@ export async function createCourse(formData: FormData) {
   const startTime = formData.get("startTime") as string;
   const endTime = formData.get("endTime") as string;
   const meetingLink = formData.get("meetingLink") as string;
+  const recurrence = formData.get("recurrence") as "WEEKLY" | "ONCE";
+  const specificDateStr = formData.get("specificDate") as string;
+  let specificDate = null;
+  
+  if (recurrence === "ONCE" && specificDateStr) {
+    specificDate = new Date(specificDateStr);
+  }
 
   if (!name || !subjectId || !classId || isNaN(day) || !startTime || !endTime) {
     return { error: "Missing required fields" };
@@ -110,7 +117,9 @@ export async function createCourse(formData: FormData) {
         day,
         startTime,
         endTime,
-        meetingLink: meetingLink || null
+        meetingLink: meetingLink || null,
+        recurrence: recurrence || "WEEKLY",
+        specificDate
       }
     });
 
@@ -130,6 +139,13 @@ export async function updateCourse(id: string, formData: FormData) {
   const startTime = formData.get("startTime") as string;
   const endTime = formData.get("endTime") as string;
   const meetingLink = formData.get("meetingLink") as string;
+  const recurrence = formData.get("recurrence") as "WEEKLY" | "ONCE";
+  const specificDateStr = formData.get("specificDate") as string;
+  let specificDate = null;
+  
+  if (recurrence === "ONCE" && specificDateStr) {
+    specificDate = new Date(specificDateStr);
+  }
 
   try {
     await prisma.course.update({
@@ -142,7 +158,9 @@ export async function updateCourse(id: string, formData: FormData) {
         day,
         startTime,
         endTime,
-        meetingLink: meetingLink || null
+        meetingLink: meetingLink || null,
+        recurrence,
+        specificDate
       }
     });
 
@@ -258,10 +276,27 @@ export async function getStudentAvailableCourses(studentId: string) {
   }
 }
 
-export async function getTeacherSchedule(teacherProfileId: string) {
+export async function getTeacherSchedule(teacherProfileId: string, startDate?: Date) {
   try {
+    const where: any = { teacherId: teacherProfileId };
+    
+    if (startDate) {
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + 7);
+      
+      where.OR = [
+        { recurrence: "WEEKLY" },
+        {
+          AND: [
+            { recurrence: "ONCE" },
+            { specificDate: { gte: startDate, lt: endDate } }
+          ]
+        }
+      ];
+    }
+
     const courses = await prisma.course.findMany({
-      where: { teacherId: teacherProfileId },
+      where,
       include: {
         subject: true,
         class: true
@@ -277,3 +312,33 @@ export async function getTeacherSchedule(teacherProfileId: string) {
   }
 }
 
+export async function getCoursesForAttendance(date: Date) {
+  try {
+    const day = date.getDay();
+    const nextDay = new Date(date);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    const courses = await prisma.course.findMany({
+      where: {
+        OR: [
+          { recurrence: "WEEKLY", day: day },
+          { 
+            recurrence: "ONCE", 
+            specificDate: { 
+              gte: date,
+              lt: nextDay 
+            } 
+          }
+        ]
+      },
+      include: {
+        subject: true,
+        class: true
+      },
+      orderBy: { startTime: "asc" }
+    });
+    return { courses };
+  } catch (error) {
+    return { error: "Failed to fetch courses for attendance" };
+  }
+}

@@ -71,8 +71,9 @@ export function TeacherSchedule({ teacherProfileId }: { teacherProfileId: string
 
   useEffect(() => {
     const fetchSchedule = async () => {
+      setLoading(true);
       try {
-        const res = await getTeacherSchedule(teacherProfileId);
+        const res = await getTeacherSchedule(teacherProfileId, startOfWeek);
         if (res.courses) {
           setCourses(res.courses);
         } else {
@@ -85,7 +86,7 @@ export function TeacherSchedule({ teacherProfileId }: { teacherProfileId: string
       }
     };
     fetchSchedule();
-  }, [teacherProfileId]);
+  }, [teacherProfileId, currentDate]); // Refetch on date change
 
   if (loading) {
     return (
@@ -130,6 +131,8 @@ export function TeacherSchedule({ teacherProfileId }: { teacherProfileId: string
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {DAYS.map((dayName, index) => {
+          const dayIndex = index;
           const dayDate = getDayDate(index);
           const isToday = dayDate.toDateString() === new Date().toDateString();
           const dayCourses = scheduleByDay[dayIndex] || [];

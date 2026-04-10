@@ -218,3 +218,46 @@ export async function getStudentProfileByUserId(userId: string) {
   }
 }
 
+export async function getStudentSchedule(userId: string, startDate: Date) {
+  try {
+    const student = await prisma.studentProfile.findUnique({
+      where: { userId },
+      select: { id: true, classes: { select: { id: true } } }
+    });
+
+    if (!student) return { courses: [] };
+
+    const classIds = student.classes.map(c => c.id);
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 7);
+
+    const courses = await prisma.course.findMany({
+      where: {
+        classId: { in: classIds },
+        OR: [
+          { recurrence: "WEEKLY" },
+          {
+            AND: [
+              { recurrence: "ONCE" },
+              { specificDate: { gte: startDate, lt: endDate } }
+            ]
+          }
+        ]
+      },
+      include: {
+        subject: true,
+        teacher: { include: { user: true } },
+        class: true
+      },
+      orderBy: [
+        { day: "asc" },
+        { startTime: "asc" }
+      ]
+    });
+
+    return { courses };
+  } catch (error) {
+    console.error("Error fetching student schedule:", error);
+    return { error: "Failed to fetch schedule" };
+  }
+}

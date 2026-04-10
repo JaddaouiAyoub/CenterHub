@@ -31,6 +31,7 @@ export function CourseScheduler() {
   const [loading, setLoading] = useState(true);
   const [isCourseOpen, setIsCourseOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<any>(null);
+  const [recurrenceType, setRecurrenceType] = useState<"WEEKLY" | "ONCE">("WEEKLY");
 
   // Pagination & Search
   const [search, setSearch] = useState("");
@@ -173,6 +174,19 @@ export function CourseScheduler() {
                 <p className="text-purple-100 text-sm mt-1">Définissez un créneau dans le calendrier scolaire.</p>
               </div>
               <form onSubmit={handleCreateCourse} className="p-6 space-y-4 bg-white">
+                <div className="space-y-2">
+                  <Label className="text-slate-600 font-bold">Type de Séance</Label>
+                  <Select name="recurrence" defaultValue="WEEKLY" onValueChange={(v: any) => setRecurrenceType(v)}>
+                    <SelectTrigger className="border-slate-200">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="WEEKLY">Hebdomadaire (Récurrente)</SelectItem>
+                      <SelectItem value="ONCE">Séance Unique (Date précise)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-slate-600">Nom du cours / Description</Label>
@@ -220,27 +234,45 @@ export function CourseScheduler() {
                     </Select>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-slate-600">Jour</Label>
-                    <Select name="day">
-                      <SelectTrigger className="border-slate-200">
-                        <SelectValue placeholder="Jour" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {DAYS.map((d, i) => (
-                          <SelectItem key={i} value={((i + 1) % 7).toString()}>{d}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+
+                <div className={`grid ${recurrenceType === "ONCE" ? "grid-cols-1" : "grid-cols-3"} gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100`}>
+                  {recurrenceType === "WEEKLY" ? (
+                    <div className="space-y-2">
+                      <Label className="text-slate-600">Jour</Label>
+                      <Select name="day">
+                        <SelectTrigger className="border-slate-200 bg-white">
+                          <SelectValue placeholder="Jour" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DAYS.map((d, i) => (
+                            <SelectItem key={i} value={((i + 1) % 7).toString()}>{d}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label className="text-slate-600">Date Précise</Label>
+                      <Input name="specificDate" type="date" required className="border-slate-200 bg-white focus:ring-purple-500" 
+                        onChange={(e) => {
+                          // Also set the 'day' field automatically based on the chosen date
+                          const date = new Date(e.target.value);
+                          const dayInput = document.getElementById('hidden-day-input') as HTMLInputElement;
+                          if (dayInput && !isNaN(date.getTime())) {
+                            dayInput.value = date.getDay().toString();
+                          }
+                        }}
+                      />
+                      <input type="hidden" id="hidden-day-input" name="day" value="0" />
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label className="text-slate-600">Début</Label>
-                    <Input name="startTime" type="time" required className="border-slate-200 focus:ring-purple-500" />
+                    <Input name="startTime" type="time" required className="border-slate-200 bg-white focus:ring-purple-500" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-slate-600">Fin</Label>
-                    <Input name="endTime" type="time" required className="border-slate-200 focus:ring-purple-500" />
+                    <Input name="endTime" type="time" required className="border-slate-200 bg-white focus:ring-purple-500" />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -266,6 +298,19 @@ export function CourseScheduler() {
             <p className="text-indigo-100 text-sm mt-1">Mise à jour du créneau pour {editingCourse?.name}.</p>
           </div>
           <form onSubmit={handleUpdateCourse} className="p-6 space-y-4 bg-white">
+            <div className="space-y-2">
+                <Label className="text-slate-600 font-bold">Type de Séance</Label>
+                <Select key={`rec-${editingCourse?.id}`} name="recurrence" defaultValue={editingCourse?.recurrence || "WEEKLY"} onValueChange={(v: any) => setRecurrenceType(v)}>
+                  <SelectTrigger className="border-slate-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="WEEKLY">Hebdomadaire (Récurrente)</SelectItem>
+                    <SelectItem value="ONCE">Séance Unique (Date précise)</SelectItem>
+                  </SelectContent>
+                </Select>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-slate-600">Nom du cours / Description</Label>
@@ -313,27 +358,44 @@ export function CourseScheduler() {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label className="text-slate-600">Jour</Label>
-                <Select key={`day-${editingCourse?.id}`} name="day" defaultValue={editingCourse?.day?.toString() || ""}>
-                  <SelectTrigger className="border-slate-200">
-                    <SelectValue placeholder="Choisir" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DAYS.map((d, i) => (
-                      <SelectItem key={i} value={((i + 1) % 7).toString()}>{d}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            
+            <div className={`grid ${recurrenceType === "ONCE" ? "grid-cols-1" : "grid-cols-3"} gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100`}>
+              {recurrenceType === "WEEKLY" ? (
+                <div className="space-y-2">
+                  <Label className="text-slate-600">Jour</Label>
+                  <Select key={`day-${editingCourse?.id}`} name="day" defaultValue={editingCourse?.day?.toString() || ""}>
+                    <SelectTrigger className="border-slate-200 bg-white">
+                      <SelectValue placeholder="Choisir" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DAYS.map((d, i) => (
+                        <SelectItem key={i} value={((i + 1) % 7).toString()}>{d}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label className="text-slate-600">Date Précise</Label>
+                  <Input key={`date-${editingCourse?.id}`} name="specificDate" type="date" defaultValue={editingCourse?.specificDate ? new Date(editingCourse.specificDate).toISOString().split('T')[0] : ""} required className="border-slate-200 bg-white focus:ring-indigo-500" 
+                    onChange={(e) => {
+                      const date = new Date(e.target.value);
+                      const dayInput = document.getElementById('hidden-day-edit-input') as HTMLInputElement;
+                      if (dayInput && !isNaN(date.getTime())) {
+                        dayInput.value = date.getDay().toString();
+                      }
+                    }}
+                  />
+                  <input type="hidden" id="hidden-day-edit-input" name="day" defaultValue={editingCourse?.day?.toString() || "0"} />
+                </div>
+              )}
               <div className="space-y-2">
                 <Label className="text-slate-600">Début</Label>
-                <Input key={`start-${editingCourse?.id}`} name="startTime" type="time" defaultValue={editingCourse?.startTime || ""} required className="border-slate-200 focus:ring-indigo-500" />
+                <Input key={`start-${editingCourse?.id}`} name="startTime" type="time" defaultValue={editingCourse?.startTime || ""} required className="border-slate-200 bg-white focus:ring-indigo-500" />
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-600">Fin</Label>
-                <Input key={`end-${editingCourse?.id}`} name="endTime" type="time" defaultValue={editingCourse?.endTime || ""} required className="border-slate-200 focus:ring-indigo-500" />
+                <Input key={`end-${editingCourse?.id}`} name="endTime" type="time" defaultValue={editingCourse?.endTime || ""} required className="border-slate-200 bg-white focus:ring-indigo-500" />
               </div>
             </div>
             <div className="space-y-2">
@@ -412,10 +474,15 @@ export function CourseScheduler() {
                   <TableCell>
                      <div className="flex flex-col space-y-1">
                         <span className="font-semibold text-slate-800 text-sm">
-                          {DAYS[(c.day + 6) % 7]}
+                          {c.recurrence === "WEEKLY" ? DAYS[(c.day + 6) % 7] : new Date(c.specificDate).toLocaleDateString("fr-FR")}
                         </span>
-                        <div className="flex items-center text-xs text-indigo-600 font-medium bg-indigo-50 px-2 py-1 rounded-md w-max">
-                          <Clock className="w-3.5 h-3.5 mr-1.5" /> {c.startTime} - {c.endTime}
+                        <div className="flex items-center space-x-2">
+                          <div className="flex items-center text-xs text-indigo-600 font-medium bg-indigo-50 px-2 py-1 rounded-md w-max">
+                            <Clock className="w-3.5 h-3.5 mr-1.5" /> {c.startTime} - {c.endTime}
+                          </div>
+                          {c.recurrence === "ONCE" && (
+                            <Badge className="bg-amber-50 text-amber-700 border-amber-100 text-[9px] h-5">UNIQUE</Badge>
+                          )}
                         </div>
                      </div>
                   </TableCell>
