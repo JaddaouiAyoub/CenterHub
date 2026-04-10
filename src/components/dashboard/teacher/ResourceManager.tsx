@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { uploadResources, getCourseResources, deleteResource } from "@/actions/resources";
+import { getCourseResources, deleteResource } from "@/actions/resources";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -75,12 +75,20 @@ export function ResourceManager({ courseId, courseName }: { courseId: string; co
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return;
     setUploading(true);
+    
     const formData = new FormData();
+    formData.append("courseId", courseId);
     selectedFiles.forEach(f => formData.append("files", f.file));
 
     try {
-      const res = await uploadResources(courseId, formData);
-      if (res.success) {
+      const response = await fetch("/api/resources/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const res = await response.json();
+
+      if (response.ok && res.success) {
         if (res.errors && res.errors.length > 0) {
           toast.warning(`${res.success}, mais avec des erreurs : ${res.errors.join(", ")}`);
         } else {
@@ -92,7 +100,7 @@ export function ResourceManager({ courseId, courseName }: { courseId: string; co
         toast.error(res.error || "Erreur d'upload");
       }
     } catch (error) {
-      toast.error("Une erreur est survenue");
+      toast.error("Une erreur réseau est survenue");
     } finally {
       setUploading(false);
     }
