@@ -193,3 +193,28 @@ export async function getTeacherStudents(teacherProfileId: string, search = "", 
   }
 }
 
+export async function getStudentProfileByUserId(userId: string) {
+  try {
+    const profile = await prisma.studentProfile.findUnique({
+      where: { userId },
+      include: { 
+        user: true,
+        classes: {
+          include: {
+            courses: {
+              include: {
+                subject: true,
+                teacher: { include: { user: true } }
+              }
+            }
+          }
+        }
+      }
+    });
+    return profile;
+  } catch (error) {
+    console.error("Error fetching student profile:", error);
+    return null;
+  }
+}
+

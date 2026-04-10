@@ -62,3 +62,23 @@ export async function getStudentsForCourse(courseId: string) {
     return { error: "Failed to fetch students for course" };
   }
 }
+
+export async function getStudentAttendanceHistory(studentId: string) {
+  try {
+    const attendance = await prisma.attendance.findMany({
+      where: { studentId },
+      include: {
+        course: {
+          include: {
+            subject: true,
+            teacher: { include: { user: true } }
+          }
+        }
+      },
+      orderBy: { date: "desc" }
+    });
+    return { attendance };
+  } catch (error) {
+    return { error: "Failed to fetch attendance history" };
+  }
+}
