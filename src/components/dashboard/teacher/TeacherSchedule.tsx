@@ -31,6 +31,43 @@ const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dima
 export function TeacherSchedule({ teacherProfileId }: { teacherProfileId: string }) {
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  // Helper: Get start of the week for a given date (Monday)
+  const getStartOfWeek = (d: Date) => {
+    const date = new Date(d);
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+    return new Date(date.setDate(diff));
+  };
+
+  const startOfWeek = getStartOfWeek(currentDate);
+
+  const goToPreviousWeek = () => {
+    const d = new Date(currentDate);
+    d.setDate(d.getDate() - 7);
+    setCurrentDate(d);
+  };
+
+  const goToNextWeek = () => {
+    const d = new Date(currentDate);
+    d.setDate(d.getDate() + 7);
+    setCurrentDate(d);
+  };
+
+  const goToToday = () => {
+    setCurrentDate(new Date());
+  };
+
+  const formatDateLabel = (d: Date) => {
+    return d.toLocaleDateString("fr-FR", { day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
+  const getDayDate = (dayIndex: number) => {
+    const d = new Date(startOfWeek);
+    d.setDate(d.getDate() + dayIndex);
+    return d;
+  };
 
   useEffect(() => {
     const fetchSchedule = async () => {
@@ -68,33 +105,46 @@ export function TeacherSchedule({ teacherProfileId }: { teacherProfileId: string
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-center bg-white p-5 rounded-2xl border border-slate-100 shadow-sm gap-4">
         <div className="flex items-center space-x-3">
-          <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
             <CalendarIcon className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Emploi du Temps Hebdomadaire</h2>
-            <p className="text-sm text-slate-500">Consultez vos séances et groupes assignés.</p>
+            <h2 className="text-xl font-bold text-slate-900">Emploi du Temps</h2>
+            <p className="text-sm text-slate-500 font-medium tracking-tight">Semaine du {formatDateLabel(startOfWeek)}</p>
           </div>
+        </div>
+        
+        <div className="flex items-center bg-slate-50 p-1.5 rounded-xl border border-slate-200">
+          <Button variant="ghost" size="icon" onClick={goToPreviousWeek} className="h-9 w-9 text-slate-600 hover:bg-white hover:text-blue-600 rounded-lg transition-all">
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+          <Button variant="ghost" onClick={goToToday} className="mx-2 px-4 h-9 font-bold text-xs uppercase tracking-widest text-slate-700 hover:bg-white rounded-lg transition-all">
+            Aujourd'hui
+          </Button>
+          <Button variant="ghost" size="icon" onClick={goToNextWeek} className="h-9 w-9 text-slate-600 hover:bg-white hover:text-blue-600 rounded-lg transition-all">
+            <ChevronRight className="w-5 h-5" />
+          </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {DAYS.map((dayName, index) => {
-          const dayIndex = index; // 0=Mon, 1=Tue... in our display, but verify schema mapping. 
-          // Usually in schema 0=Sunday or 1=Monday? 
-          // Previous components used 0-6. Let's stick to 0=Monday (French usual) for display.
+          const dayDate = getDayDate(index);
+          const isToday = dayDate.toDateString() === new Date().toDateString();
           const dayCourses = scheduleByDay[dayIndex] || [];
           
           return (
-            <Card key={dayName} className="border-none shadow-sm bg-white/50 backdrop-blur-sm">
-              <CardHeader className="p-4 border-b border-slate-50 pb-3">
-                <CardTitle className="text-sm font-bold flex items-center justify-between">
-                  {dayName}
-                  <Badge variant="secondary" className="bg-slate-100 text-slate-500 font-normal">
-                    {dayCourses.length}
-                  </Badge>
+            <Card key={dayName} className={`
+              border-none shadow-sm transition-all duration-300
+              ${isToday ? "bg-white ring-2 ring-blue-500/20 shadow-blue-100/50" : "bg-white/50"}
+            `}>
+              <CardHeader className={`p-4 border-b pb-3 ${isToday ? "bg-blue-50/50" : "border-slate-50"}`}>
+                <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center justify-between text-slate-400">
+                  <span className={isToday ? "text-blue-700 font-black" : ""}>{dayName}</span>
+                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${isToday ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-500"}`}>
+                    {dayDate.getDate()}
+                  </span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-2 space-y-2">
