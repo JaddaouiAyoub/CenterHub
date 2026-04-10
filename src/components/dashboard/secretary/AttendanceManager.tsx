@@ -95,7 +95,14 @@ export function AttendanceManager() {
             <Label className="text-slate-600 font-medium">Cours / Session</Label>
             <Select onValueChange={(val) => setSelectedCourse(val)} value={selectedCourse || undefined}>
               <SelectTrigger className="border-slate-200 focus:ring-indigo-500 rounded-lg h-11">
-                <SelectValue placeholder="Choisir un cours" />
+                <SelectValue placeholder="Choisir un cours">
+                  {selectedCourse && courses.length > 0 ? (
+                    (() => {
+                      const c = courses.find(curr => curr.id === selectedCourse);
+                      return c ? `${c.subject.name} - ${c.class.name} (${c.startTime})` : "Choisir un cours";
+                    })()
+                  ) : "Choisir un cours"}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {courses.map(c => (

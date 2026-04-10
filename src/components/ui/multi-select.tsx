@@ -50,7 +50,9 @@ export function MultiSelect({
           <span className="text-muted-foreground">{placeholder}</span>
         ) : (
           <div className="flex items-center space-x-1 truncate max-w-[90%]">
-             {selectedCount <= 2 ? (
+             {options.length === 0 ? (
+               <span className="text-slate-400 italic text-sm">Chargement...</span>
+             ) : selectedCount <= 2 ? (
                selectedIds.map(id => {
                  const opt = options.find(o => o.id === id);
                  return opt ? (

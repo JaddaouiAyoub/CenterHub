@@ -6,6 +6,7 @@ const prismaSeed = new PrismaClient();
 async function main() {
   const hashedPassword = await bcrypt.hash("password123", 10);
 
+  console.log("Emptying database...");
   // Clean data (ordre important à cause des relations)
   await prismaSeed.payment.deleteMany();
   await prismaSeed.attendance.deleteMany();
@@ -18,64 +19,60 @@ async function main() {
   await prismaSeed.class.deleteMany();
   await prismaSeed.user.deleteMany();
 
+  console.log("Creating basic types...");
   // 1. Subjects
-  const math = await prismaSeed.subject.create({
-    data: { name: "Mathématiques" },
-  });
-
-  const physics = await prismaSeed.subject.create({
-    data: { name: "Physique-Chimie" },
-  });
+  const math = await prismaSeed.subject.create({ data: { name: "Mathématiques" } });
+  const physics = await prismaSeed.subject.create({ data: { name: "Physique-Chimie" } });
+  const french = await prismaSeed.subject.create({ data: { name: "Français" } });
+  const english = await prismaSeed.subject.create({ data: { name: "Anglais" } });
 
   // 2. Classes
-  const classA = await prismaSeed.class.create({
-    data: { name: "Bac Pro" },
+  const bacPro = await prismaSeed.class.create({ data: { name: "Bac Pro" } });
+  const second = await prismaSeed.class.create({ data: { name: "2ème Année" } });
+  const thirdClass = await prismaSeed.class.create({ data: { name: "3ème Année" } });
+
+  console.log("Creating administrative users...");
+  // 3. Admin & Secretary
+  await prismaSeed.user.create({
+    data: { name: "Directeur", email: "admin@example.com", password: hashedPassword, role: "ADMIN" }
   });
 
-  const classB = await prismaSeed.class.create({
-    data: { name: "2ème Année" },
+  await prismaSeed.user.create({
+    data: { name: "Secrétaire Fatima", email: "secretary@example.com", password: hashedPassword, role: "SECRETARY" }
   });
 
-  // 3. Users (Admin + Secretary)
-  const admin = await prismaSeed.user.create({
-    data: {
-      name: "Admin",
-      email: "admin@example.com",
-      password: hashedPassword,
-      role: "ADMIN",
-    },
-  });
-
-  const secretary = await prismaSeed.user.create({
-    data: {
-      name: "Secrétaire",
-      email: "secretary@example.com",
-      password: hashedPassword,
-      role: "SECRETARY",
-    },
-  });
-
-  // 4. Teacher
-  const teacherUser = await prismaSeed.user.create({
+  console.log("Creating teachers...");
+  // 4. Teachers
+  const teacherAhmed = await prismaSeed.user.create({
     data: {
       name: "Prof. Ahmed",
-      email: "teacher@example.com",
+      email: "ahmed@example.com",
       password: hashedPassword,
       role: "TEACHER",
-      teacherProfile: {
-        create: {
-          specialization: "Mathématiques",
-          bio: "Expert en analyse",
-        },
-      },
+      teacherProfile: { create: { specialization: "Mathématiques", bio: "Expert en analyse" } }
     },
-    include: {
-      teacherProfile: true,
-    },
+    include: { teacherProfile: true }
   });
 
-  // 5. Student
-  const studentUser = await prismaSeed.user.create({
+  const teacherZineb = await prismaSeed.user.create({
+    data: {
+      name: "Prof. Zineb",
+      email: "zineb@example.com",
+      password: hashedPassword,
+      role: "TEACHER",
+      teacherProfile: { create: { specialization: "Physique", bio: "Passionnée par les sciences" } }
+    },
+    include: { teacherProfile: true }
+  });
+
+  console.log("Creating students and parents...");
+  // 5. Parent
+  const parentFull = await prismaSeed.user.create({
+    data: { name: "M. Alami", email: "parent@example.com", password: hashedPassword, role: "PARENT" }
+  });
+
+  // 6. Students
+  const studentSami = await prismaSeed.user.create({
     data: {
       name: "Sami Alami",
       email: "student1@example.com",
@@ -84,82 +81,120 @@ async function main() {
       studentProfile: {
         create: {
           dateOfBirth: new Date("2008-03-12"),
-        },
-      },
+          classes: { connect: { id: second.id } },
+          subjects: { connect: [{ id: math.id }, { id: physics.id }] }
+        }
+      }
     },
-    include: {
-      studentProfile: true,
-    },
+    include: { studentProfile: true }
   });
 
-  // 6. Link student to class (many-to-many)
-  await prismaSeed.studentProfile.update({
-    where: { id: studentUser.studentProfile.id },
+  const studentLina = await prismaSeed.user.create({
     data: {
-      classes: {
-        connect: { id: classA.id },
-      },
+      name: "Lina Bennani",
+      email: "student2@example.com",
+      password: hashedPassword,
+      role: "STUDENT",
+      studentProfile: {
+        create: {
+          dateOfBirth: new Date("2009-08-24"),
+          classes: { connect: { id: bacPro.id } },
+          subjects: { connect: [{ id: french.id }, { id: math.id }] }
+        }
+      }
     },
+    include: { studentProfile: true }
   });
 
-  // 7. Course
-  const course = await prismaSeed.course.create({
+  console.log("Creating courses...");
+  // 7. Weekly Courses
+  const mathWeekly = await prismaSeed.course.create({
     data: {
-      name: "Session Math 1",
+      name: "Mathématiques Hebdos",
       subjectId: math.id,
-      classId: classA.id,
-      teacherId: teacherUser.teacherProfile.id,
+      classId: second.id,
+      teacherId: teacherAhmed.teacherProfile.id,
       day: 1, // Monday
       startTime: "09:00",
       endTime: "11:00",
-      meetingLink: "https://zoom.us/j/123456",
-    },
+      meetingLink: "https://zoom.us/j/math-hebdo",
+      recurrence: "WEEKLY"
+    }
   });
 
-  // 8. Resource (NEW)
+  const physicsWeekly = await prismaSeed.course.create({
+    data: {
+      name: "Labo Physique",
+      subjectId: physics.id,
+      classId: second.id,
+      teacherId: teacherZineb.teacherProfile.id,
+      day: 3, // Wednesday
+      startTime: "14:00",
+      endTime: "16:00",
+      recurrence: "WEEKLY"
+    }
+  });
+
+  // 8. One-off Courses (Date specific)
+  const today = new Date();
+  const nextFriday = new Date();
+  nextFriday.setDate(today.getDate() + (5 - today.getDay() + 7) % 7);
+  nextFriday.setHours(10, 0, 0, 0);
+
+  const mathRevision = await prismaSeed.course.create({
+    data: {
+      name: "Révision Examen Math",
+      subjectId: math.id,
+      classId: second.id,
+      teacherId: teacherAhmed.teacherProfile.id,
+      day: nextFriday.getDay(),
+      startTime: "10:00",
+      endTime: "12:00",
+      recurrence: "ONCE",
+      specificDate: nextFriday
+    }
+  });
+
+  console.log("Creating resources and activities...");
+  // 9. Resources
   await prismaSeed.resource.create({
-    data: {
-      name: "Cours PDF Math",
-      url: "https://example.com/math.pdf",
-      type: "PDF",
-      courseId: course.id,
-    },
+    data: { name: "Polycopié Dérivées", url: "https://example.com/math1.pdf", type: "PDF", courseId: mathWeekly.id }
   });
 
-  // 9. Enrollment
-  await prismaSeed.enrollment.create({
-    data: {
-      studentId: studentUser.studentProfile.id,
-      active: true,
-    },
+  await prismaSeed.resource.create({
+    data: { name: "Schéma Circuit", url: "https://example.com/circuit.png", type: "IMAGE", courseId: physicsWeekly.id }
   });
 
   // 10. Attendance
   await prismaSeed.attendance.create({
-    data: {
-      studentId: studentUser.studentProfile.id,
-      courseId: course.id,
-      date: new Date(),
-      status: "PRESENT",
-    },
+    data: { studentId: studentSami.studentProfile.id, courseId: mathWeekly.id, date: new Date(), status: "PRESENT" }
   });
 
-  // 11. Payment
+  // 11. Payments
   await prismaSeed.payment.create({
     data: {
-      studentId: studentUser.studentProfile.id,
-      amount: 500,
-      month: 4,
-      year: 2026,
+      studentId: studentSami.studentProfile.id,
+      amount: 450,
+      month: today.getMonth() + 1,
+      year: today.getFullYear(),
       status: "PAID",
       method: "CASH",
-      courses: {
-        connect: { id: course.id },
-      },
-    },
+      courses: { connect: { id: mathWeekly.id } }
+    }
   });
 
-  console.log("🌱 Seed completed successfully");
+  await prismaSeed.payment.create({
+    data: {
+      studentId: studentLina.studentProfile.id,
+      amount: 450,
+      month: today.getMonth() + 1,
+      year: today.getFullYear(),
+      status: "PENDING",
+      method: "TRANSFER"
+    }
+  });
+
+  console.log("🌱 Seed completed with consistent data!");
 }
 
 main()

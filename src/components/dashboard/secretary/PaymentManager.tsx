@@ -157,20 +157,20 @@ export function PaymentManager() {
             <form onSubmit={handleCreatePayment} className="p-6 space-y-4 bg-white">
               <div className="space-y-2">
                 <Label className="text-slate-600">Étudiant</Label>
-                <Select 
-                  name="studentId" 
-                  required 
-                  onValueChange={(val: string | null) => setSelectedStudentId(val || "")}
-                >
-                  <SelectTrigger className="border-slate-200">
-                    <SelectValue placeholder="Choisir l'étudiant" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {students.map(s => (
-                      <SelectItem key={s.studentProfile?.id} value={s.studentProfile?.id?.toString()}>{s.name || s.user?.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                    <Select name="studentId" required onValueChange={(val: string | null) => setSelectedStudentId(val || "")} value={selectedStudentId || undefined}>
+                      <SelectTrigger className="border-slate-200">
+                        <SelectValue placeholder="Choisir l'étudiant">
+                          {selectedStudentId && students.length > 0 ? (
+                            students.find(s => s.studentProfile?.id === selectedStudentId)?.name || "Choisir l'étudiant"
+                          ) : "Choisir l'étudiant"}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {students.map(s => (
+                          <SelectItem key={s.studentProfile?.id} value={s.studentProfile?.id?.toString()}>{s.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
               </div>
 
               {selectedStudentId && (
@@ -257,8 +257,10 @@ export function PaymentManager() {
               <Label className="text-slate-600">Étudiant</Label>
               <Select key={`student-${editingPayment?.id}`} name="studentId" defaultValue={editingPayment?.studentId?.toString()} disabled>
                 <SelectTrigger className="border-slate-200 bg-slate-50">
-                  <SelectValue placeholder="Chargement...">
-                    {(val: any) => val ? students.find(s => s.studentProfile?.id?.toString() === val.toString())?.name || val : "Chargement..."}
+                  <SelectValue placeholder="Choisir l'étudiant">
+                    {editingPayment?.studentId && students.length > 0 ? (
+                      students.find(s => s.studentProfile?.id === editingPayment.studentId)?.name || editingPayment.student.user.name
+                    ) : "Chargement..."}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>

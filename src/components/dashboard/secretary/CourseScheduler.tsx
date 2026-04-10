@@ -32,6 +32,12 @@ export function CourseScheduler() {
   const [isCourseOpen, setIsCourseOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<any>(null);
   const [recurrenceType, setRecurrenceType] = useState<"WEEKLY" | "ONCE">("WEEKLY");
+  
+  // Creation Form State (for controlled Selects to avoid ID leakage)
+  const [newClassId, setNewClassId] = useState<string>("");
+  const [newTeacherId, setNewTeacherId] = useState<string>("");
+  const [newSubjectId, setNewSubjectId] = useState<string>("");
+  const [newDay, setNewDay] = useState<string>("");
 
   // Pagination & Search
   const [search, setSearch] = useState("");
@@ -194,9 +200,11 @@ export function CourseScheduler() {
                   </div>
                   <div className="space-y-2">
                     <Label className="text-slate-600">Classe / Groupe</Label>
-                    <Select name="classId">
+                    <Select name="classId" value={newClassId} onValueChange={(val) => setNewClassId(val || "")}>
                       <SelectTrigger className="border-slate-200">
-                        <SelectValue placeholder="Choisir la classe" />
+                        <SelectValue placeholder="Choisir la classe">
+                          {newClassId ? classes.find(c => c.id === newClassId)?.name : "Choisir la classe"}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {classes.map(c => (
@@ -209,11 +217,14 @@ export function CourseScheduler() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-slate-600">Enseignant</Label>
-                    <Select name="teacherId">
+                    <Select name="teacherId" value={newTeacherId} onValueChange={(val) => setNewTeacherId(val || "")}>
                       <SelectTrigger className="border-slate-200">
-                        <SelectValue placeholder="Facultatif" />
+                        <SelectValue placeholder="Facultatif">
+                          {newTeacherId === "none" ? "Aucun enseignant" : (newTeacherId ? (teachers.find(t => t.teacherProfile?.id === newTeacherId)?.name || "Facultatif") : "Facultatif")}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="none">Aucun enseignant</SelectItem>
                         {teachers.map(t => (
                           <SelectItem key={t.teacherProfile?.id} value={t.teacherProfile?.id?.toString() || ""}>{t.name}</SelectItem>
                         ))}
@@ -222,9 +233,11 @@ export function CourseScheduler() {
                   </div>
                   <div className="space-y-2">
                     <Label className="text-slate-600">Matière</Label>
-                    <Select name="subjectId">
+                    <Select name="subjectId" value={newSubjectId} onValueChange={(val) => setNewSubjectId(val || "")}>
                       <SelectTrigger className="border-slate-200">
-                        <SelectValue placeholder="Obligatoire" />
+                        <SelectValue placeholder="Obligatoire">
+                          {newSubjectId ? (subjects.find(s => s.id === newSubjectId)?.name || "Obligatoire") : "Obligatoire"}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {subjects.map(s => (
@@ -239,9 +252,11 @@ export function CourseScheduler() {
                   {recurrenceType === "WEEKLY" ? (
                     <div className="space-y-2">
                       <Label className="text-slate-600">Jour</Label>
-                      <Select name="day">
+                      <Select name="day" value={newDay} onValueChange={(val) => setNewDay(val || "")}>
                         <SelectTrigger className="border-slate-200 bg-white">
-                          <SelectValue placeholder="Jour" />
+                          <SelectValue placeholder="Jour">
+                             {newDay ? DAYS[(parseInt(newDay) + 6) % 7] : "Jour"}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {DAYS.map((d, i) => (
@@ -320,7 +335,11 @@ export function CourseScheduler() {
                 <Label className="text-slate-600">Classe</Label>
                 <Select key={`class-${editingCourse?.id}`} name="classId" defaultValue={editingCourse?.classId?.toString() || ""}>
                   <SelectTrigger className="border-slate-200">
-                    <SelectValue placeholder="Choisir" />
+                    <SelectValue placeholder="Choisir la classe">
+                      {editingCourse?.classId && classes.length > 0 ? (
+                        classes.find(c => c.id === editingCourse.classId)?.name || "Choisir la classe"
+                      ) : "Choisir la classe"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {classes.map(c => (
@@ -335,9 +354,15 @@ export function CourseScheduler() {
                 <Label className="text-slate-600">Enseignant</Label>
                 <Select key={`teacher-${editingCourse?.id}`} name="teacherId" defaultValue={editingCourse?.teacherId?.toString() || ""}>
                   <SelectTrigger className="border-slate-200">
-                    <SelectValue placeholder="Choisir" />
+                    <SelectValue placeholder="Choisir l'enseignant">
+                      {editingCourse?.teacherId === null || editingCourse?.teacherId === "" ? "Non assigné" : 
+                       (editingCourse?.teacherId && teachers.length > 0 ? (
+                        teachers.find(t => t.teacherProfile?.id === editingCourse.teacherId)?.name || "Non assigné"
+                      ) : "Non assigné")}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="">Non assigné</SelectItem>
                     {teachers.map(t => (
                       <SelectItem key={t.teacherProfile?.id} value={t.teacherProfile?.id?.toString() || ""}>{t.name}</SelectItem>
                     ))}
@@ -348,7 +373,11 @@ export function CourseScheduler() {
                 <Label className="text-slate-600">Matière</Label>
                 <Select key={`subject-${editingCourse?.id}`} name="subjectId" defaultValue={editingCourse?.subjectId?.toString() || ""}>
                   <SelectTrigger className="border-slate-200">
-                    <SelectValue placeholder="Choisir" />
+                    <SelectValue placeholder="Choisir la matière">
+                      {editingCourse?.subjectId && subjects.length > 0 ? (
+                        subjects.find(s => s.id === editingCourse.subjectId)?.name || "Choisir la matière"
+                      ) : "Choisir la matière"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {subjects.map(s => (
@@ -365,7 +394,9 @@ export function CourseScheduler() {
                   <Label className="text-slate-600">Jour</Label>
                   <Select key={`day-${editingCourse?.id}`} name="day" defaultValue={editingCourse?.day?.toString() || ""}>
                     <SelectTrigger className="border-slate-200 bg-white">
-                      <SelectValue placeholder="Choisir" />
+                      <SelectValue placeholder="Choisir le jour">
+                        {editingCourse?.day !== undefined ? DAYS[(editingCourse.day + 6) % 7] : "Choisir"}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {DAYS.map((d, i) => (
