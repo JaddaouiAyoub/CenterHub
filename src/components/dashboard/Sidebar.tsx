@@ -44,6 +44,7 @@ export function Sidebar({ role }: { role: string }) {
     } else if (role === "TEACHER") {
       links.push(
         { href: `${base}/schedule`, label: "Emploi du temps", icon: Calendar },
+        { href: `${base}/attendance`, label: "Mes Absences", icon: BookOpenCheck },
         { href: `${base}/students`, label: "Mes Étudiants", icon: BookOpen }
       );
     } else if (role === "PARENT") {

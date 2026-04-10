@@ -85,7 +85,19 @@ model Course {
 
   attendance Attendance[]
   payments   Payment[]
+  resources  Resource[]
 }
+
+model Resource {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  type      String   // "PDF", "IMAGE", "VIDEO", "OTHER"
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
 
 model Enrollment {
   id        String         @id @default(cuid())

@@ -257,3 +257,23 @@ export async function getStudentAvailableCourses(studentId: string) {
     return [];
   }
 }
+
+export async function getTeacherSchedule(teacherProfileId: string) {
+  try {
+    const courses = await prisma.course.findMany({
+      where: { teacherId: teacherProfileId },
+      include: {
+        subject: true,
+        class: true
+      },
+      orderBy: [
+        { day: "asc" },
+        { startTime: "asc" }
+      ]
+    });
+    return { courses };
+  } catch (error) {
+    return { error: "Failed to fetch teacher schedule" };
+  }
+}
+

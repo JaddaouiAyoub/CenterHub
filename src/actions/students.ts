@@ -135,3 +135,61 @@ export async function deleteStudent(id: string) {
     return { error: "Failed to delete student" };
   }
 }
+
+export async function getTeacherStudents(teacherProfileId: string, search = "", page = 1, pageSize = 10) {
+  try {
+    const skip = (page - 1) * pageSize;
+
+    // 1. Get all classes associated with this teacher's courses
+    const teacherCourses = await prisma.course.findMany({
+      where: { teacherId: teacherProfileId },
+      select: { classId: true }
+    });
+
+    const classIds = Array.from(new Set(teacherCourses.map(c => c.classId).filter(Boolean)));
+
+    if (classIds.length === 0) {
+      return { students: [], total: 0, totalPages: 0 };
+    }
+
+    // 2. Fetch students in those classes
+    const whereClause: any = {
+      role: Role.STUDENT,
+      studentProfile: {
+        classes: {
+          some: {
+            id: { in: classIds }
+          }
+        }
+      }
+    };
+
+    if (search) {
+      whereClause.name = { contains: search, mode: "insensitive" };
+    }
+
+    const [students, total] = await Promise.all([
+      prisma.user.findMany({
+        where: whereClause,
+        skip,
+        take: pageSize,
+        include: {
+          studentProfile: {
+            include: {
+              classes: true,
+              subjects: true
+            }
+          }
+        },
+        orderBy: { createdAt: "desc" }
+      }),
+      prisma.user.count({ where: whereClause })
+    ]);
+
+    return { students, total, totalPages: Math.ceil(total / pageSize) };
+  } catch (error) {
+    console.error("Error in getTeacherStudents:", error);
+    return { error: "Failed to fetch your students" };
+  }
+}
+

@@ -120,4 +120,35 @@ export async function deleteTeacher(id: string) {
   } catch (error) {
     return { error: "Failed to delete teacher" };
   }
+}export async function getTeacherProfileByUserId(userId: string) {
+  if (!userId) {
+    console.warn("getTeacherProfileByUserId called with missing userId");
+    return null;
+  }
+  try {
+    let profile = await prisma.teacherProfile.findUnique({
+      where: { userId },
+      include: { user: true }
+    });
+
+    if (!profile) {
+      // Fallback: Check if the user exists and has the TEACHER role
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (user && user.role === Role.TEACHER) {
+        // Auto-create missing profile record
+        profile = await prisma.teacherProfile.create({
+          data: { userId },
+          include: { user: true }
+        });
+        console.log(`Auto-created missing teacher profile for user ${userId}`);
+      }
+    }
+
+    return profile;
+  } catch (error) {
+    console.error("Error in getTeacherProfileByUserId:", error);
+    return null;
+  }
 }
+
+

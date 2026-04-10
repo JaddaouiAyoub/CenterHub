@@ -1,153 +1,181 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { User } from "next-auth";
 import { 
   Calendar, 
   BookOpen, 
   MessageSquare, 
   Clock,
-  ChevronRight
+  ChevronRight,
+  Activity
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
-};
-
-const item = {
-  hidden: { y: 20, opacity: 0 },
-  show: { y: 0, opacity: 1 }
-};
+import { getTeacherProfileByUserId } from "@/actions/teachers";
+import { getTeacherSchedule } from "@/actions/courses";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 
 export function TeacherView({ user }: { user: User }) {
-  const schedule = [
-    { time: "08:30", course: "Mathématiques", class: "Terminale A", room: "Sall 102" },
-    { time: "10:30", course: "Physique", class: "2nde C", room: "Labo 1" },
-    { time: "14:00", course: "Algèbre", class: "1ère B", room: "Salle 204" },
-  ];
+  const params = useParams();
+  const locale = params.locale as string;
+  const [schedule, setSchedule] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [nextCourse, setNextCourse] = useState<any>(null);
+  const [totalStudents, setTotalStudents] = useState(0);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user.id) return;
+      const profile = await getTeacherProfileByUserId(user.id);
+      if (profile) {
+        const res = await getTeacherSchedule(profile.id);
+        if (res.courses) {
+          setSchedule(res.courses);
+          
+          // Find next course (simple logic: first course of the day or first course overall)
+          const today = new Date().getDay(); // 0=Sun, 1=Mon...
+          // Our schema day is 0=Monday (let's assume based on component display)
+          // Adjust if needed. 
+          const currentDay = today === 0 ? 6 : today - 1; 
+          
+          const todaysCourses = res.courses.filter((c: any) => c.day === currentDay);
+          if (todaysCourses.length > 0) {
+            setNextCourse(todaysCourses[0]);
+          } else {
+            setNextCourse(res.courses[0]);
+          }
+        }
+      }
+      setLoading(false);
+    };
+    fetchData();
+  }, [user.id]);
+
+  if (loading) return <div className="p-12 text-center text-slate-500">Chargement...</div>;
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Espace Enseignant</h1>
-        <p className="text-slate-500 mt-1">Gérez vos cours, vos notes et vos élèves.</p>
+        <h1 className="text-2xl font-bold text-slate-900">Bienvenue, {user.name}</h1>
+        <p className="text-slate-500 mt-1">Gérez vos séances et le suivi de vos élèves.</p>
       </div>
 
-      <motion.div 
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-1 md:grid-cols-3 gap-6"
-      >
-        <motion.div variants={item}>
-          <Card className="border-none shadow-sm bg-blue-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-blue-100 text-sm font-medium">Prochain cours</p>
-                  <h3 className="text-xl font-bold mt-1">Mathématiques</h3>
-                  <p className="text-blue-100 text-xs mt-2 flex items-center">
-                    <Clock className="w-3 h-3 mr-1" /> Dans 15 minutes
-                  </p>
-                </div>
-                <div className="bg-white/20 p-2 rounded-lg">
-                  <Calendar className="w-6 h-6" />
-                </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="border-none shadow-sm bg-blue-600 text-white">
+          <CardContent className="p-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-blue-100 text-sm font-medium">Prochain cours</p>
+                <h3 className="text-xl font-bold mt-1">
+                  {nextCourse ? nextCourse.subject?.name : "Aucun cours"}
+                </h3>
+                <p className="text-blue-100 text-xs mt-2 flex items-center">
+                  <Clock className="w-3 h-3 mr-1" /> {nextCourse ? `${nextCourse.startTime} aujourd'hui` : "Repos"}
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={item}>
-          <Card className="border-none shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-slate-500 text-sm font-medium">Étudiants total</p>
-                  <h3 className="text-xl font-bold mt-1 text-slate-900">142</h3>
-                  <p className="text-emerald-600 text-xs mt-2 flex items-center">
-                    <Activity className="w-3 h-3 mr-1" /> 98% présence
-                  </p>
-                </div>
-                <div className="bg-slate-100 p-2 rounded-lg text-slate-600">
-                  <BookOpen className="w-6 h-6" />
-                </div>
+              <div className="bg-white/20 p-2 rounded-lg">
+                <Calendar className="w-6 h-6" />
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <motion.div variants={item}>
-          <Card className="border-none shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-slate-500 text-sm font-medium">Messages non lus</p>
-                  <h3 className="text-xl font-bold mt-1 text-slate-900">7</h3>
-                  <p className="text-blue-600 text-xs mt-2 flex items-center">
-                    <Activity className="w-3 h-3 mr-1" /> Nouveaux messages
-                  </p>
-                </div>
-                <div className="bg-slate-100 p-2 rounded-lg text-slate-600">
-                  <MessageSquare className="w-6 h-6" />
-                </div>
+        <Card className="border-none shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-slate-500 text-sm font-medium">Mes Matières</p>
+                <h3 className="text-xl font-bold mt-1 text-slate-900">
+                  {Array.from(new Set(schedule.map(c => c.subjectId))).length}
+                </h3>
+                <p className="text-emerald-600 text-xs mt-2 flex items-center">
+                  <Activity className="w-3 h-3 mr-1" /> Spécialisation active
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </motion.div>
+              <div className="bg-slate-100 p-2 rounded-lg text-slate-600">
+                <BookOpen className="w-6 h-6" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 border-none shadow-sm">
+        <Card className="border-none shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-slate-500 text-sm font-medium">Classes gérées</p>
+                <h3 className="text-xl font-bold mt-1 text-slate-900">
+                  {Array.from(new Set(schedule.map(c => c.classId))).length}
+                </h3>
+                <p className="text-blue-600 text-xs mt-2 flex items-center">
+                  <Activity className="w-3 h-3 mr-1" /> Groupes assignés
+                </p>
+              </div>
+              <div className="bg-slate-100 p-2 rounded-lg text-slate-600">
+                <MessageSquare className="w-6 h-6" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="border-none shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">Emploi du temps du jour</CardTitle>
-            <Button variant="outline" size="sm">Tout voir</Button>
+            <CardTitle className="text-lg">Aujourd'hui / Prochains Cours</CardTitle>
+            <Link href={`/${locale}/dashboard/schedule`}>
+              <Button variant="outline" size="sm">Tout voir</Button>
+            </Link>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {schedule.map((slot, i) => (
+              {schedule.slice(0, 5).map((slot, i) => (
                 <div key={i} className="flex items-center justify-between p-4 hover:bg-slate-50 rounded-xl transition-colors border border-transparent hover:border-slate-100">
                   <div className="flex items-center space-x-4">
-                    <div className="p-2 bg-slate-100 rounded-lg text-slate-600 font-bold text-xs w-14 text-center">
-                      {slot.time}
+                    <div className="p-2 bg-slate-100 rounded-lg text-slate-600 font-bold text-xs w-24 text-center">
+                      Jour {slot.day + 1} - {slot.startTime}
                     </div>
                     <div>
-                      <h4 className="font-semibold text-slate-900">{slot.course}</h4>
-                      <p className="text-xs text-slate-500">{slot.class} • {slot.room}</p>
+                      <h4 className="font-semibold text-slate-900">{slot.subject?.name}</h4>
+                      <p className="text-xs text-slate-500">{slot.name} • {slot.class?.name}</p>
                     </div>
                   </div>
                   <ChevronRight className="w-4 h-4 text-slate-300" />
                 </div>
               ))}
+              {schedule.length === 0 && (
+                <p className="text-center py-8 text-slate-400 italic">Aucun cours assigné pour le moment.</p>
+              )}
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-none shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg">Dernières notes</CardTitle>
+            <CardTitle className="text-lg">Accès Rapide</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                { student: "Sara B.", score: "18/20", task: "Devoir Math" },
-                { student: "Ahmed K.", score: "15/20", task: "Quiz Physique" },
-                { student: "Youssef L.", score: "12/20", task: "Devoir Math" }
-              ].map((note, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-900">{note.student}</p>
-                    <p className="text-xs text-slate-500">{note.task}</p>
-                  </div>
-                  <span className="text-sm font-bold text-blue-600">{note.score}</span>
+          <CardContent className="space-y-4">
+            <Link href={`/${locale}/dashboard/attendance`} className="block">
+              <div className="p-4 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors flex items-center justify-between group">
+                <div className="flex items-center space-x-3 text-indigo-700 font-bold">
+                  <BookOpen className="w-5 h-5" />
+                  <span>Pointer les absences</span>
                 </div>
-              ))}
-            </div>
+                <ChevronRight className="w-5 h-5 text-indigo-300 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+            <Link href={`/${locale}/dashboard/schedule`} className="block">
+              <div className="p-4 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-colors flex items-center justify-between group">
+                <div className="flex items-center space-x-3 text-emerald-700 font-bold">
+                  <Calendar className="w-5 h-5" />
+                  <span>Mon emploi du temps</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-emerald-300 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
           </CardContent>
         </Card>
       </div>
@@ -155,6 +183,3 @@ export function TeacherView({ user }: { user: User }) {
   );
 }
 
-// I need to import Activity and Button too.
-import { Activity } from "lucide-react";
-import { Button } from "@/components/ui/button";
