@@ -105,14 +105,7 @@ export function TeacherAttendance({ teacherProfileId }: { teacherProfileId: stri
             <Label className="text-slate-600 font-medium">Sélectionner une séance</Label>
             <Select onValueChange={(val) => setSelectedCourse(val)} value={selectedCourse || undefined}>
               <SelectTrigger className="border-slate-200 focus:ring-blue-500 rounded-lg h-11 text-slate-700">
-                <SelectValue placeholder="Choisir un cours">
-                  {selectedCourse ? (
-                    (() => {
-                      const course = courses.find(c => c.id.toString() === selectedCourse.toString());
-                      return course ? `${course.subject.name} - ${course.class.name} (${course.startTime})` : selectedCourse;
-                    })()
-                  ) : "Choisir un cours"}
-                </SelectValue>
+                <SelectValue placeholder="Choisir un cours" />
               </SelectTrigger>
               <SelectContent>
                 {courses.map(c => (

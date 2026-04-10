@@ -190,28 +190,31 @@ export function ResourceManager({ courseId, courseName }: { courseId: string; co
         </h3>
         
         {loading ? (
-          <div className="flex justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-slate-200" /></div>
+          <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-blue-200" /></div>
         ) : existingResources.length === 0 ? (
-          <div className="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-            <p className="text-sm text-slate-400">Aucun document pour le moment.</p>
+          <div className="text-center py-16 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-100">
+            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
+              <Plus className="w-6 h-6 text-slate-300" />
+            </div>
+            <p className="text-sm text-slate-400 font-medium font-heading">Aucun document partagé pour le moment.</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {existingResources.map((res) => (
               <div 
                 key={res.id} 
-                className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100 shadow-sm hover:border-blue-100 transition-colors"
+                className="group relative flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:border-blue-200 hover:shadow-md transition-all duration-300"
               >
-                <div className="flex items-center space-x-3 overflow-hidden">
-                  <div className="p-2 bg-slate-50 rounded-lg shrink-0">
+                <div className="flex items-center space-x-4 overflow-hidden">
+                  <div className="p-3 bg-slate-50 group-hover:bg-blue-50 rounded-xl shrink-0 transition-colors">
                     {getIcon(res.type)}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-800 truncate">{res.name}</p>
-                    <p className="text-[10px] text-slate-400">{new Date(res.createdAt).toLocaleDateString("fr-FR")}</p>
+                    <p className="text-sm font-bold text-slate-800 truncate group-hover:text-blue-700 transition-colors">{res.name}</p>
+                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{new Date(res.createdAt).toLocaleDateString("fr-FR", { day: 'numeric', month: 'short' })} • {res.type}</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-1">
+                <div className="flex items-center space-x-1 pl-2">
                   <DocumentViewer 
                     id={res.id} 
                     name={res.name} 
@@ -221,7 +224,7 @@ export function ResourceManager({ courseId, courseName }: { courseId: string; co
                     variant="ghost" 
                     size="icon" 
                     onClick={() => handleDelete(res.id)}
-                    className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50"
+                    className="h-9 w-9 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all scale-95 group-hover:scale-100"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>

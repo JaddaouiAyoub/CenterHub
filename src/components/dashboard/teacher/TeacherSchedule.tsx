@@ -146,7 +146,7 @@ export function TeacherSchedule({ teacherProfileId }: { teacherProfileId: string
                               <FileText className="w-3 h-3 mr-2" /> Documents et Supports
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
+                          <DialogContent className="sm:max-w-4xl">
                             <DialogHeader>
                               <DialogTitle>Supports de cours : {c.name}</DialogTitle>
                             </DialogHeader>
