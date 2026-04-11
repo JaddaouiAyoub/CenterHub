@@ -121,3 +121,18 @@ export async function deletePayment(id: string) {
     return { error: "Failed to delete payment record" };
   }
 }
+
+export async function getStudentPayments(studentProfileId: string) {
+  try {
+    const payments = await prisma.payment.findMany({
+      where: { studentId: studentProfileId },
+      include: {
+        courses: { include: { subject: true } }
+      },
+      orderBy: { date: "desc" }
+    });
+    return { payments };
+  } catch (error) {
+    return { error: "Failed to fetch student payments" };
+  }
+}

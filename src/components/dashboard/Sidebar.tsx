@@ -52,6 +52,13 @@ export function Sidebar({ role }: { role: string }) {
         { href: `${base}/progress`, label: "Suivi Enfant", icon: BarChart },
         { href: `${base}/messages`, label: "Messages", icon: MessageSquare }
       );
+    } else if (role === "STUDENT") {
+      links.push(
+        { href: `${base}/schedule`, label: "Emploi du Temps", icon: Calendar },
+        { href: `${base}/attendance`, label: "Mes Absences", icon: BookOpenCheck },
+        { href: `${base}/resources`, label: "Ressources", icon: Library },
+        { href: `${base}/payments`, label: "Mes Paiements", icon: CreditCard }
+      );
     } else if (role === "SECRETARY") {
       links.push(
         { href: `${base}/teachers`, label: "Enseignants", icon: Users },
