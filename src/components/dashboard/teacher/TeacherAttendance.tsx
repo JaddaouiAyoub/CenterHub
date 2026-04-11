@@ -27,7 +27,9 @@ export function TeacherAttendance({ teacherProfileId }: { teacherProfileId: stri
   const [attendanceRecords, setAttendanceRecords] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [loadingSchedule, setLoadingSchedule] = useState(true);
-
+  const selectedCourseData = courses.find(
+    c => c.id.toString() === selectedCourse
+  );
   useEffect(() => {
     const fetchCourses = async () => {
       const res = await getTeacherSchedule(teacherProfileId);
@@ -103,9 +105,13 @@ export function TeacherAttendance({ teacherProfileId }: { teacherProfileId: stri
           </div>
           <div className="space-y-2">
             <Label className="text-slate-600 font-medium">Sélectionner une séance</Label>
-            <Select onValueChange={(val) => setSelectedCourse(val)} value={selectedCourse || undefined}>
+            <Select onValueChange={(val) => setSelectedCourse(val)} value={selectedCourse || ""}>
               <SelectTrigger className="border-slate-200 focus:ring-blue-500 rounded-lg h-11 text-slate-700">
-                <SelectValue placeholder="Choisir un cours" />
+                <SelectValue placeholder="Choisir une séance">
+                  {selectedCourseData
+                    ? `${selectedCourseData.subject.name} - ${selectedCourseData.class.name} (${selectedCourseData.startTime})`
+                    : "Choisir une séance"}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {courses.map(c => (
