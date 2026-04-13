@@ -1,12 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { User } from "next-auth";
 import { 
   Search, 
   Globe,
   Settings,
-  User as UserIcon
+  User as UserIcon,
+  Menu
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -16,6 +18,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useParams, useRouter, usePathname } from "next/navigation";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetTrigger 
+} from "@/components/ui/sheet";
+import { SidebarContent } from "@/components/dashboard/Sidebar";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 export function Navbar({ user }: { user: User }) {
@@ -31,10 +39,27 @@ export function Navbar({ user }: { user: User }) {
     router.push(newPath);
   };
 
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
-      <div className="flex-1 flex items-center">
-        <div className="relative w-64">
+    <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-8 shrink-0">
+      <div className="flex-1 flex items-center gap-2 sm:gap-4">
+        {/* Mobile Menu Trigger */}
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+          <SheetTrigger 
+            render={
+              <Button variant="ghost" size="icon" className="lg:hidden text-slate-600">
+                <Menu className="w-6 h-6" />
+                <span className="sr-only">Toggle Menu</span>
+              </Button>
+            }
+          />
+          <SheetContent side="left" className="p-0 w-64 sm:w-72 bg-slate-900 border-r-0" showCloseButton={false}>
+            <SidebarContent role={user.role as string} onNavigate={() => setIsOpen(false)} />
+          </SheetContent>
+        </Sheet>
+
+        <div className="relative w-full max-w-[200px] sm:max-w-xs md:max-w-md lg:w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input 
             type="text" 

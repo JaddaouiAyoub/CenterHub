@@ -25,7 +25,7 @@ import { useParams, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 
-export function Sidebar({ role }: { role: string }) {
+export function SidebarContent({ role, onNavigate }: { role: string; onNavigate?: () => void }) {
   const t = useTranslations("dashboard");
   const params = useParams();
   const pathname = usePathname();
@@ -81,21 +81,21 @@ export function Sidebar({ role }: { role: string }) {
   const navLinks = getLinks();
 
   return (
-    <div className="w-64 h-full bg-slate-900 text-white flex flex-col">
+    <div className="h-full bg-slate-900 text-white flex flex-col w-full">
       <div className="p-6">
         <div className="flex items-center space-x-3 rtl:space-x-reverse">
-          <ShieldCheck className="w-8 h-8 text-blue-400" />
+          <ShieldCheck className="w-8 h-8 text-blue-400 shrink-0" />
           <span className="text-xl font-bold tracking-tight">CenterHub</span>
         </div>
       </div>
 
-      <nav className="flex-1 px-4 space-y-1 mt-4">
+      <nav className="flex-1 px-4 space-y-1 mt-4 overflow-y-auto">
         {navLinks.map((link) => {
           const Icon = link.icon;
           const isActive = pathname === link.href;
 
           return (
-            <Link key={link.href} href={link.href}>
+            <Link key={link.href} href={link.href} onClick={onNavigate}>
               <motion.div
                 whileHover={{ x: 4 }}
                 className={cn(
@@ -105,8 +105,8 @@ export function Sidebar({ role }: { role: string }) {
                     : "text-slate-400 hover:bg-slate-800 hover:text-white"
                 )}
               >
-                <Icon className="w-5 h-5" />
-                <span className="font-medium">{link.label}</span>
+                <Icon className="w-5 h-5 shrink-0" />
+                <span className="font-medium text-sm md:text-base">{link.label}</span>
               </motion.div>
             </Link>
           );
@@ -118,10 +118,18 @@ export function Sidebar({ role }: { role: string }) {
           onClick={() => signOut({ callbackUrl: `/${locale}/login` })}
           className="flex items-center space-x-3 rtl:space-x-reverse w-full px-4 py-3 rounded-lg text-slate-400 hover:bg-red-900/20 hover:text-red-400 transition-colors"
         >
-          <LogOut className="w-5 h-5" />
+          <LogOut className="w-5 h-5 shrink-0" />
           <span className="font-medium text-sm">{t("logout")}</span>
         </button>
       </div>
+    </div>
+  );
+}
+
+export function Sidebar({ role }: { role: string }) {
+  return (
+    <div className="hidden lg:flex w-64 h-full shrink-0">
+      <SidebarContent role={role} />
     </div>
   );
 }

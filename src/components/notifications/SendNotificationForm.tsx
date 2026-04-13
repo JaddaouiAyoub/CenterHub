@@ -132,7 +132,7 @@ export function SendNotificationForm({ senderId, senderRole, availableClassIds, 
       <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
         <Label className="text-slate-700 font-bold text-sm">Destinataire</Label>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2">
           {senderRole === "SECRETARY" && (
             <>
               {[
