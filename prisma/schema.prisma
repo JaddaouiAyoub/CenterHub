@@ -29,6 +29,10 @@ model User {
   // Profiles
   teacherProfile TeacherProfile?
   studentProfile StudentProfile?
+
+  // Notifications
+  sentNotifications  Notification[]     @relation("SentNotifications")
+  notificationReads  NotificationRead[]
 }
 
 model TeacherProfile {
@@ -60,10 +64,11 @@ model Subject {
 }
 
 model Class {
-  id       String           @id @default(cuid())
-  name     String           @unique
-  students StudentProfile[]
-  courses  Course[]
+  id            String           @id @default(cuid())
+  name          String           @unique
+  students      StudentProfile[]
+  courses       Course[]
+  notifications Notification[]
 }
 
 enum Recurrence {
@@ -132,4 +137,38 @@ model Payment {
   status    String // "PAID", "PENDING", "PARTIAL"
   method    String? // "CASH", "CARD", "TRANSFER"
   courses   Course[]
+}
+
+// --- Notification System ------------------------------------------------------
+
+model Notification {
+  id           String   @id @default(cuid())
+  title        String
+  message      String
+  senderId     String
+  sender       User     @relation("SentNotifications", fields: [senderId], references: [id])
+  senderRole   String
+
+  targetType    String
+  targetClassId String?
+  targetClass   Class?   @relation(fields: [targetClassId], references: [id])
+  targetUserId  String?
+
+  attachmentUrl  String?
+  attachmentName String?
+  attachmentType String?
+
+  createdAt DateTime           @default(now())
+  reads     NotificationRead[]
+}
+
+model NotificationRead {
+  id             String       @id @default(cuid())
+  notificationId String
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  readAt         DateTime     @default(now())
+
+  @@unique([notificationId, userId])
 }

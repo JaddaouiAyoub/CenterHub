@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { ReactElement, useState } from "react";
 import { 
   Dialog, 
   DialogContent, 
@@ -22,15 +22,20 @@ import {
 } from "lucide-react";
 
 interface DocumentViewerProps {
-  id: string;
+  id?: string;
+  notificationId?: string;
+  url?: string;
   name: string;
   type: string;
   trigger?: React.ReactNode;
 }
 
-export function DocumentViewer({ id, name, type, trigger }: DocumentViewerProps) {
+export function DocumentViewer({ id, notificationId, url, name, type, trigger }: DocumentViewerProps) {
   const [loading, setLoading] = useState(true);
-  const resourceUrl = `/api/resource/${id}`;
+  
+  let resourceUrl = url || "";
+  if (id) resourceUrl = `/api/resource/${id}`;
+  else if (notificationId) resourceUrl = `/api/notification-file/${notificationId}`;
 
   const renderViewer = () => {
     switch (type) {
@@ -95,8 +100,8 @@ export function DocumentViewer({ id, name, type, trigger }: DocumentViewerProps)
 
   return (
     <Dialog onOpenChange={(open) => !open && setLoading(true)}>
-      <DialogTrigger>
-        {trigger || (
+      <DialogTrigger 
+        render={trigger as ReactElement || (
           <Button 
             variant="ghost" 
             size="icon" 
@@ -105,7 +110,7 @@ export function DocumentViewer({ id, name, type, trigger }: DocumentViewerProps)
             <Eye className="w-4 h-4" />
           </Button>
         )}
-      </DialogTrigger>
+      />
       <DialogContent className="max-w-5xl w-[95vw] sm:w-[90vw] p-0 bg-transparent border-none shadow-none gap-0">
         <div className="bg-white rounded-t-2xl p-4 flex items-center justify-between border-b border-slate-100 shadow-sm relative z-20">
           <div className="flex items-center space-x-3 overflow-hidden">

@@ -3,7 +3,6 @@
 import { useTranslations } from "next-intl";
 import { User } from "next-auth";
 import { 
-  Bell, 
   Search, 
   Globe,
   Settings,
@@ -17,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useParams, useRouter, usePathname } from "next/navigation";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 export function Navbar({ user }: { user: User }) {
   const t = useTranslations("dashboard");
@@ -50,10 +50,10 @@ export function Navbar({ user }: { user: User }) {
           <span className="sr-only">Language</span>
         </Button>
 
-        <Button variant="ghost" size="icon" className="relative text-slate-600">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
-        </Button>
+        <NotificationBell
+          userId={user.id!}
+          role={user.role as string}
+        />
 
         <div className="h-8 w-px bg-slate-200 mx-2" />
 

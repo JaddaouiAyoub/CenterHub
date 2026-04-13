@@ -16,7 +16,8 @@ import {
   BookOpenCheck,
   CreditCard,
   School,
-  Library
+  Library,
+  Bell
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -45,7 +46,8 @@ export function Sidebar({ role }: { role: string }) {
       links.push(
         { href: `${base}/schedule`, label: "Emploi du temps", icon: Calendar },
         { href: `${base}/attendance`, label: "Mes Absences", icon: BookOpenCheck },
-        { href: `${base}/students`, label: "Mes Étudiants", icon: BookOpen }
+        { href: `${base}/students`, label: "Mes Étudiants", icon: BookOpen },
+        { href: `${base}/notifications`, label: "Notifications", icon: Bell }
       );
     } else if (role === "PARENT") {
       links.push(
@@ -57,7 +59,8 @@ export function Sidebar({ role }: { role: string }) {
         { href: `${base}/schedule`, label: "Emploi du Temps", icon: Calendar },
         { href: `${base}/attendance`, label: "Mes Absences", icon: BookOpenCheck },
         { href: `${base}/resources`, label: "Ressources", icon: Library },
-        { href: `${base}/payments`, label: "Mes Paiements", icon: CreditCard }
+        { href: `${base}/payments`, label: "Mes Paiements", icon: CreditCard },
+        { href: `${base}/notifications`, label: "Notifications", icon: Bell }
       );
     } else if (role === "SECRETARY") {
       links.push(
@@ -67,7 +70,8 @@ export function Sidebar({ role }: { role: string }) {
         { href: `${base}/classes`, label: "Classes", icon: School },
         { href: `${base}/courses`, label: "Cours", icon: Calendar },
         { href: `${base}/attendance`, label: "Absences", icon: BookOpenCheck },
-        { href: `${base}/payments`, label: "Facturation", icon: CreditCard }
+        { href: `${base}/payments`, label: "Facturation", icon: CreditCard },
+        { href: `${base}/notifications`, label: "Notifications", icon: Bell }
       );
     }
 
