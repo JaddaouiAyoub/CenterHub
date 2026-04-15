@@ -288,11 +288,11 @@ export function TeacherGrades({ teacherProfileId }: { teacherProfileId: string }
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
+          <DialogTrigger render={
             <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6">
               <Plus className="w-4 h-4 mr-2" /> Nouvelle évaluation
             </Button>
-          </DialogTrigger>
+          } />
           <DialogContent className="sm:max-w-[500px] rounded-3xl">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold">Créer une évaluation</DialogTitle>
@@ -313,7 +313,7 @@ export function TeacherGrades({ teacherProfileId }: { teacherProfileId: string }
                   <Label>Type</Label>
                   <Select 
                     value={formData.type} 
-                    onValueChange={(val: EvaluationType) => setFormData({ ...formData, type: val })}
+                    onValueChange={(val) => setFormData({ ...formData, type: val as EvaluationType })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -342,7 +342,7 @@ export function TeacherGrades({ teacherProfileId }: { teacherProfileId: string }
                 <Label>Matière & Classe</Label>
                 <Select 
                   value={formData.pairIndex} 
-                  onValueChange={(val) => setFormData({ ...formData, pairIndex: val })}
+                  onValueChange={(val) => setFormData({ ...formData, pairIndex: val || "" })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner le groupe">
