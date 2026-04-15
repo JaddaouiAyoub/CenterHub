@@ -9,12 +9,38 @@
   "dashboard": {
     "title": "Tableau de bord",
     "welcome": "Bienvenue, {name}",
-    "logout": "Déconnexion"
+    "logout": "Déconnexion",
+    "gradesLink": "Notes"
   },
   "roles": {
     "ADMIN": "Administrateur",
     "TEACHER": "Enseignant",
     "PARENT": "Parent",
     "SECRETARY": "Secrétaire"
+  },
+  "grades": {
+    "title": "Gestion des Notes",
+    "studentTitle": "Mes Notes",
+    "addEvaluation": "Ajouter une évaluation",
+    "editEvaluation": "Modifier l'évaluation",
+    "evaluationTitle": "Titre",
+    "evaluationType": "Type d'évaluation",
+    "evaluationDate": "Date",
+    "published": "Publié",
+    "draft": "Brouillon",
+    "saveGrades": "Enregistrer les notes",
+    "publish": "Publier les notes",
+    "student": "Étudiant",
+    "score": "Note",
+    "comment": "Commentaire",
+    "noGrades": "Aucune note disponible pour le moment.",
+    "types": {
+      "CONTROLE_1": "Contrôle 1",
+      "CONTROLE_2": "Contrôle 2",
+      "CONTROLE_3": "Contrôle 3",
+      "DEVOIR": "Devoir",
+      "EXAMEN": "Examen",
+      "AUTRE": "Autre"
+    }
   }
 }

@@ -15,7 +15,7 @@
 - Upload / téléchargement de ressources par cours
 - Gestion des profils enseignants et étudiants
 - Protection des routes avec **middleware/proxy** et gestion i18n
-
+- Gestion complète des notes
 ## Architecture du projet
 
 - `src/app/` : pages principales et structure du site

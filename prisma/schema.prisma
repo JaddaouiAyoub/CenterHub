@@ -16,6 +16,15 @@ enum Role {
   STUDENT
 }
 
+enum EvaluationType {
+  CONTROLE_1
+  CONTROLE_2
+  CONTROLE_3
+  DEVOIR
+  EXAMEN
+  AUTRE
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -43,6 +52,7 @@ model TeacherProfile {
   specialization String?
   bio            String?
   courses        Course[]
+  evaluations    Evaluation[]
 }
 
 model StudentProfile {
@@ -55,13 +65,15 @@ model StudentProfile {
   payments    Payment[]
   attendance  Attendance[]
   subjects    Subject[]
+  grades      Grade[]
 }
 
 model Subject {
-  id       String           @id @default(cuid())
-  name     String           @unique
-  courses  Course[]
-  students StudentProfile[]
+  id          String       @id @default(cuid())
+  name        String       @unique
+  courses     Course[]
+  students    StudentProfile[]
+  evaluations Evaluation[]
 }
 
 model Class {
@@ -70,6 +82,7 @@ model Class {
   students      StudentProfile[]
   courses       Course[]
   notifications Notification[]
+  evaluations   Evaluation[]
 }
 
 enum Recurrence {
@@ -172,4 +185,35 @@ model NotificationRead {
   readAt         DateTime     @default(now())
 
   @@unique([notificationId, userId])
+}
+
+model Evaluation {
+  id          String         @id @default(cuid())
+  title       String
+  type        EvaluationType
+  subjectId   String
+  subject     Subject        @relation(fields: [subjectId], references: [id])
+  classId     String
+  class       Class          @relation(fields: [classId], references: [id])
+  teacherId   String
+  teacher     TeacherProfile @relation(fields: [teacherId], references: [id])
+  isPublished Boolean        @default(false)
+  date        DateTime       @default(now())
+  grades      Grade[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model Grade {
+  id           String         @id @default(cuid())
+  value        Float
+  comment      String?
+  studentId    String
+  student      StudentProfile @relation(fields: [studentId], references: [id])
+  evaluationId String
+  evaluation   Evaluation     @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@unique([studentId, evaluationId])
 }

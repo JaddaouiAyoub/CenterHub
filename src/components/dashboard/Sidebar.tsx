@@ -17,7 +17,8 @@ import {
   CreditCard,
   School,
   Library,
-  Bell
+  Bell,
+  FileText
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -47,6 +48,7 @@ export function SidebarContent({ role, onNavigate }: { role: string; onNavigate?
         { href: `${base}/schedule`, label: "Emploi du temps", icon: Calendar },
         { href: `${base}/attendance`, label: "Mes Absences", icon: BookOpenCheck },
         { href: `${base}/students`, label: "Mes Étudiants", icon: BookOpen },
+        { href: `${base}/grades`, label: t("gradesLink") || "Notes", icon: FileText },
         { href: `${base}/notifications`, label: "Notifications", icon: Bell }
       );
     } else if (role === "PARENT") {
@@ -59,6 +61,7 @@ export function SidebarContent({ role, onNavigate }: { role: string; onNavigate?
         { href: `${base}/schedule`, label: "Emploi du Temps", icon: Calendar },
         { href: `${base}/attendance`, label: "Mes Absences", icon: BookOpenCheck },
         { href: `${base}/resources`, label: "Ressources", icon: Library },
+        { href: `${base}/grades`, label: "Mes Notes", icon: FileText },
         { href: `${base}/payments`, label: "Mes Paiements", icon: CreditCard },
         { href: `${base}/notifications`, label: "Notifications", icon: Bell }
       );
