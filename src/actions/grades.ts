@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-export type EvaluationType = "CONTROLE_1" | "CONTROLE_2" | "CONTROLE_3" | "DEVOIR" | "EXAMEN" | "AUTRE";
+import { EvaluationType } from "@prisma/client";
 
 export async function getTeacherEvaluations(teacherProfileId: string) {
   try {
@@ -93,7 +93,7 @@ export async function getTeacherSubjectsClasses(teacherProfileId: string) {
       }
     });
 
-    const pairs = courses.reduce((acc: any[], curr) => {
+    const pairs = courses.reduce((acc: any[], curr: { subject: { id: any; name: any; }; class: { id: any; name: any; }; }) => {
       const exists = acc.find(p => p.subjectId === curr.subject.id && p.classId === curr.class.id);
       if (!exists) {
         acc.push({
