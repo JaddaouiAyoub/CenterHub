@@ -107,8 +107,16 @@ export async function getMyNotifications(
         skip,
         take: pageSize,
         orderBy: { createdAt: "desc" },
-        include: {
-          sender: { select: { id: true, name: true, role: true } },
+        select: {
+          id: true,
+          title: true,
+          message: true,
+          senderRole: true,
+          attachmentUrl: true,
+          attachmentName: true,
+          attachmentType: true,
+          createdAt: true,
+          sender: { select: { id: true, name: true, role: true, image: true } },
           targetClass: { select: { id: true, name: true } },
           reads: { where: { userId }, select: { id: true } },
         },
@@ -197,9 +205,36 @@ export async function markAllAsRead(userId: string, role: string, studentProfile
 
 export async function getUnreadCount(userId: string, role: string, studentProfileId?: string) {
   try {
-    const res = await getMyNotifications(userId, role, studentProfileId, 1, 200);
-    if ("error" in res) return { count: 0 };
-    const count = res.notifications.filter((n) => !n.isRead).length;
+    let whereClause: any = {};
+
+    if (role === "STUDENT" && studentProfileId) {
+      const studentProfile = await prisma.studentProfile.findUnique({
+        where: { id: studentProfileId },
+        select: { classes: { select: { id: true } } },
+      });
+      const classIds = studentProfile?.classes.map((c) => c.id) || [];
+      whereClause = {
+        OR: [
+          { targetType: "ALL_CLASSES" },
+          { targetType: "CLASS", targetClassId: { in: classIds } },
+        ],
+      };
+    } else if (role === "TEACHER") {
+      whereClause = {
+        OR: [
+          { targetType: "ALL_CLASSES" },
+          { targetType: "TEACHER", targetUserId: userId },
+        ],
+      };
+    }
+
+    const count = await prisma.notification.count({
+      where: {
+        ...whereClause,
+        reads: { none: { userId } }
+      }
+    });
+    
     return { count };
   } catch (error) {
     return { count: 0 };

@@ -68,10 +68,22 @@ export async function getCourses(search = "", page = 1, pageSize = 10) {
         where: whereClause,
         skip,
         take: pageSize,
-        include: {
-          teacher: { include: { user: true } },
-          subject: true,
-          class: true
+        select: {
+          id: true,
+          name: true,
+          day: true,
+          startTime: true,
+          endTime: true,
+          meetingLink: true,
+          recurrence: true,
+          subject: { select: { id: true, name: true } },
+          class: { select: { id: true, name: true } },
+          teacher: {
+            select: {
+              id: true,
+              user: { select: { id: true, name: true, image: true } }
+            }
+          }
         },
         orderBy: [
           { day: "asc" },
@@ -246,30 +258,26 @@ export async function deleteClass(id: string) {
 }
 export async function getStudentAvailableCourses(studentId: string) {
   try {
-    const student = await prisma.studentProfile.findUnique({
-      where: { id: studentId },
-      include: {
-        classes: {
-          include: {
-            courses: {
-              include: {
-                subject: true
-              }
-            }
+    const courses = await prisma.course.findMany({
+      where: {
+        class: {
+          students: {
+            some: { id: studentId }
           }
         }
+      },
+      select: {
+        id: true,
+        name: true,
+        day: true,
+        startTime: true,
+        endTime: true,
+        subject: { select: { id: true, name: true } },
+        class: { select: { id: true, name: true } }
       }
     });
-
-    if (!student) return [];
-
-    // Flatten all courses from all classes
-    const allCourses = student.classes.flatMap(cl => cl.courses);
     
-    // De-duplicate if necessary (shouldn't happen with current schema but good practice)
-    const uniqueCourses = Array.from(new Map(allCourses.map(c => [c.id, c])).values());
-    
-    return uniqueCourses;
+    return courses;
   } catch (error) {
     console.error(error);
     return [];
@@ -297,9 +305,16 @@ export async function getTeacherSchedule(teacherProfileId: string, startDate?: D
 
     const courses = await prisma.course.findMany({
       where,
-      include: {
-        subject: true,
-        class: true
+      select: {
+        id: true,
+        name: true,
+        day: true,
+        startTime: true,
+        endTime: true,
+        meetingLink: true,
+        recurrence: true,
+        subject: { select: { id: true, name: true } },
+        class: { select: { id: true, name: true } }
       },
       orderBy: [
         { day: "asc" },
@@ -331,9 +346,13 @@ export async function getCoursesForAttendance(date: Date) {
           }
         ]
       },
-      include: {
-        subject: true,
-        class: true
+      select: {
+        id: true,
+        name: true,
+        startTime: true,
+        endTime: true,
+        subject: { select: { id: true, name: true } },
+        class: { select: { id: true, name: true } }
       },
       orderBy: { startTime: "asc" }
     });

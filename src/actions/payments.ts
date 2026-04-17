@@ -18,9 +18,27 @@ export async function getPayments(search = "", page = 1, pageSize = 10) {
         where: whereClause,
         skip,
         take: pageSize,
-        include: {
-          student: { include: { user: true } },
-          courses: { include: { subject: true } }
+        select: {
+          id: true,
+          amount: true,
+          date: true,
+          month: true,
+          year: true,
+          status: true,
+          method: true,
+          student: {
+            select: {
+              id: true,
+              user: { select: { id: true, name: true, image: true } }
+            }
+          },
+          courses: {
+            select: {
+              id: true,
+              name: true,
+              subject: { select: { id: true, name: true } }
+            }
+          }
         },
         orderBy: { date: "desc" }
       }),
@@ -126,8 +144,21 @@ export async function getStudentPayments(studentProfileId: string) {
   try {
     const payments = await prisma.payment.findMany({
       where: { studentId: studentProfileId },
-      include: {
-        courses: { include: { subject: true } }
+      select: {
+        id: true,
+        amount: true,
+        date: true,
+        month: true,
+        year: true,
+        status: true,
+        method: true,
+        courses: {
+          select: {
+            id: true,
+            name: true,
+            subject: { select: { id: true, name: true } }
+          }
+        }
       },
       orderBy: { date: "desc" }
     });

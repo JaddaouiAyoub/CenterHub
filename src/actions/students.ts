@@ -19,11 +19,18 @@ export async function getStudents(search = "", page = 1, pageSize = 10) {
         where: whereClause,
         skip,
         take: pageSize,
-        include: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          role: true,
+          createdAt: true,
           studentProfile: {
-            include: {
-              classes: true,
-              subjects: true
+            select: {
+              id: true,
+              classes: { select: { id: true, name: true } },
+              subjects: { select: { id: true, name: true } }
             }
           }
         },
@@ -173,11 +180,18 @@ export async function getTeacherStudents(teacherProfileId: string, search = "", 
         where: whereClause,
         skip,
         take: pageSize,
-        include: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          role: true,
+          createdAt: true,
           studentProfile: {
-            include: {
-              classes: true,
-              subjects: true
+            select: {
+              id: true,
+              classes: { select: { id: true, name: true } },
+              subjects: { select: { id: true, name: true } }
             }
           }
         },
@@ -197,14 +211,27 @@ export async function getStudentProfileByUserId(userId: string) {
   try {
     const profile = await prisma.studentProfile.findUnique({
       where: { userId },
-      include: { 
-        user: true,
+      select: { 
+        id: true,
+        user: { select: { id: true, name: true, email: true, image: true, role: true } },
         classes: {
-          include: {
+          select: {
+            id: true,
+            name: true,
             courses: {
-              include: {
-                subject: true,
-                teacher: { include: { user: true } }
+              select: {
+                id: true,
+                name: true,
+                day: true,
+                startTime: true,
+                endTime: true,
+                subject: { select: { id: true, name: true } },
+                teacher: { 
+                  select: { 
+                    id: true,
+                    user: { select: { id: true, name: true, image: true } } 
+                  } 
+                }
               }
             }
           }
@@ -244,10 +271,23 @@ export async function getStudentSchedule(userId: string, startDate: Date) {
           }
         ]
       },
-      include: {
-        subject: true,
-        teacher: { include: { user: true } },
-        class: true
+      select: {
+        id: true,
+        name: true,
+        day: true,
+        startTime: true,
+        endTime: true,
+        meetingLink: true,
+        recurrence: true,
+        specificDate: true,
+        subject: { select: { id: true, name: true } },
+        teacher: { 
+          select: { 
+            id: true,
+            user: { select: { id: true, name: true, image: true } } 
+          } 
+        },
+        class: { select: { id: true, name: true } }
       },
       orderBy: [
         { day: "asc" },

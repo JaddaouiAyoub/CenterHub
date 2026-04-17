@@ -14,7 +14,18 @@ export async function getDashboardStats() {
       prisma.payment.findMany({
         take: 5,
         orderBy: { date: "desc" },
-        include: { student: { include: { user: true } } }
+        select: {
+          id: true,
+          amount: true,
+          date: true,
+          status: true,
+          student: {
+            select: {
+              id: true,
+              user: { select: { name: true, image: true } }
+            }
+          }
+        }
       })
     ]);
 

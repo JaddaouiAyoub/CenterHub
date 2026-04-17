@@ -13,7 +13,17 @@ export async function getAttendanceByCourse(courseId: string, date: Date) {
           lte: new Date(date.setHours(23, 59, 59, 999))
         }
       },
-      include: { student: { include: { user: true } } }
+      select: {
+        id: true,
+        status: true,
+        date: true,
+        student: {
+          select: {
+            id: true,
+            user: { select: { name: true, image: true } }
+          }
+        }
+      }
     });
     return { attendance };
   } catch (error) {
@@ -55,7 +65,18 @@ export async function getStudentsForCourse(courseId: string) {
   try {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
-      include: { class: { include: { students: { include: { user: true } } } } }
+      select: {
+        class: {
+          select: {
+            students: {
+              select: {
+                id: true,
+                user: { select: { name: true, image: true } }
+              }
+            }
+          }
+        }
+      }
     });
     return { students: course?.class.students || [] };
   } catch (error) {
@@ -67,11 +88,21 @@ export async function getStudentAttendanceHistory(studentId: string) {
   try {
     const attendance = await prisma.attendance.findMany({
       where: { studentId },
-      include: {
+      select: {
+        id: true,
+        status: true,
+        date: true,
         course: {
-          include: {
-            subject: true,
-            teacher: { include: { user: true } }
+          select: {
+            id: true,
+            name: true,
+            subject: { select: { id: true, name: true } },
+            teacher: {
+              select: {
+                id: true,
+                user: { select: { name: true, image: true } }
+              }
+            }
           }
         }
       },

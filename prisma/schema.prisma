@@ -110,6 +110,11 @@ model Course {
   attendance Attendance[]
   payments   Payment[]
   resources  Resource[]
+
+  @@index([teacherId])
+  @@index([subjectId])
+  @@index([classId])
+  @@index([day, startTime])
 }
 
 model Resource {
@@ -138,6 +143,10 @@ model Attendance {
   course    Course         @relation(fields: [courseId], references: [id])
   date      DateTime
   status    String // "PRESENT", "ABSENT", "LATE"
+
+  @@index([studentId])
+  @@index([courseId])
+  @@index([date])
 }
 
 model Payment {
@@ -151,6 +160,10 @@ model Payment {
   status    String // "PAID", "PENDING", "PARTIAL"
   method    String? // "CASH", "CARD", "TRANSFER"
   courses   Course[]
+
+  @@index([studentId])
+  @@index([month, year])
+  @@index([status])
 }
 
 // --- Notification System ------------------------------------------------------
@@ -174,6 +187,11 @@ model Notification {
 
   createdAt DateTime           @default(now())
   reads     NotificationRead[]
+
+  @@index([senderId])
+  @@index([targetUserId])
+  @@index([targetClassId])
+  @@index([createdAt])
 }
 
 model NotificationRead {
@@ -202,6 +220,12 @@ model Evaluation {
   grades      Grade[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+
+  @@index([teacherId])
+  @@index([subjectId])
+  @@index([classId])
+  @@index([date])
+  @@index([isPublished])
 }
 
 model Grade {

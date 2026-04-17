@@ -9,8 +9,20 @@ export async function getTeachers() {
   try {
     const teachers = await prisma.user.findMany({
       where: { role: Role.TEACHER },
-      include: {
-        teacherProfile: true
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        role: true,
+        createdAt: true,
+        teacherProfile: {
+          select: {
+            id: true,
+            specialization: true,
+            bio: true
+          }
+        }
       },
       orderBy: { createdAt: "desc" }
     });
@@ -32,8 +44,20 @@ export async function getPaginatedTeachers(search = "", page = 1, pageSize = 10)
         where: whereClause,
         skip,
         take: pageSize,
-        include: {
-          teacherProfile: true
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          role: true,
+          createdAt: true,
+          teacherProfile: {
+            select: {
+              id: true,
+              specialization: true,
+              bio: true
+            }
+          }
         },
         orderBy: { createdAt: "desc" }
       }),
@@ -128,7 +152,13 @@ export async function deleteTeacher(id: string) {
   try {
     let profile = await prisma.teacherProfile.findUnique({
       where: { userId },
-      include: { user: true }
+      select: {
+        id: true,
+        userId: true,
+        specialization: true,
+        bio: true,
+        user: { select: { id: true, name: true, email: true, image: true, role: true } }
+      }
     });
 
     if (!profile) {
@@ -138,7 +168,13 @@ export async function deleteTeacher(id: string) {
         // Auto-create missing profile record
         profile = await prisma.teacherProfile.create({
           data: { userId },
-          include: { user: true }
+          select: {
+            id: true,
+            userId: true,
+            specialization: true,
+            bio: true,
+            user: { select: { id: true, name: true, email: true, image: true, role: true } }
+          }
         });
         console.log(`Auto-created missing teacher profile for user ${userId}`);
       }
