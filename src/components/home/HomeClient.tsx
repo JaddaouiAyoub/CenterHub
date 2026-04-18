@@ -108,40 +108,42 @@ export default function HomeClient({ locale }: { locale: string }) {
               </div>
             </motion.div>
 
-            {/* Right Image */}
+            {/* Right Image (MODIFIÉE POUR ÊTRE CIRCULAIRE) */}
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1, ease: "easeOut" }}
-              className="relative"
+              className="relative flex justify-center lg:justify-end" // Centré sur mobile, à droite sur grand écran
             >
-              <div className="relative z-10 rounded-[2.5rem] overflow-hidden shadow-2xl border-8 border-white">
-                <div className="aspect-[4/5] relative">
+              {/* Conteneur de l'image principale mis à jour pour être un cercle parfait */}
+              <div className="relative z-10 rounded-full overflow-hidden shadow-2xl border-[2px] border-white aspect-square w-full max-w-[450px]">
+                <div className="relative w-full h-full">
                   <Image
-                    src="/ahmed.jpeg"
+                    src="/ahmed-circle-0.png" // Chemin vers la nouvelle image circulaire
                     alt="Center Director"
                     fill
-                    className="object-cover"
+                    className="object-cover" // object-cover pour s'assurer qu'il remplit le cercle
                     priority
                   />
                 </div>
               </div>
               
-              {/* Decorative elements */}
-              <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-100 rounded-full mix-blend-multiply filter blur-2xl opacity-70 animate-blob"></div>
-              <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-pink-100 rounded-full mix-blend-multiply filter blur-2xl opacity-70 animate-blob animation-delay-2000"></div>
+              {/* Éléments décoratifs (adaptés pour le format circulaire) */}
+              <div className="absolute -top-6 -right-6 w-48 h-48 bg-indigo-100 rounded-full mix-blend-multiply filter blur-2xl opacity-70 animate-blob"></div>
+              <div className="absolute -bottom-10 left-10 w-48 h-48 bg-pink-100 rounded-full mix-blend-multiply filter blur-2xl opacity-70 animate-blob animation-delay-2000"></div>
               
+              {/* Badge d'expertise (repositionné légèrement pour le cercle) */}
               <motion.div 
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.5 }}
-                className="absolute -bottom-6 -right-6 bg-white p-6 rounded-2xl shadow-2xl border border-slate-50 max-w-[200px]"
+                className="absolute bottom-4 -right-2 bg-white p-5 rounded-2xl shadow-2xl border border-slate-50 max-w-[190px] z-20"
               >
                 <div className="flex items-center space-x-3 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Expertise</p>
                 </div>
-                <p className="font-bold text-slate-900">Plus de 15 ans d'expérience</p>
+                <p className="font-bold text-slate-900 text-sm">Plus de 15 ans d'expérience</p>
               </motion.div>
             </motion.div>
           </div>

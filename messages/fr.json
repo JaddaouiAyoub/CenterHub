@@ -4,7 +4,8 @@
     "email": "Email",
     "password": "Mot de passe",
     "signIn": "Se connecter",
-    "error": "Identifiants invalides"
+    "error": "Identifiants invalides",
+    "portal_subtitle": "Plateforme Académique"
   },
   "dashboard": {
     "title": "Tableau de bord",
