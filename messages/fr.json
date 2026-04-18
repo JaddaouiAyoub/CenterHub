@@ -42,5 +42,12 @@
       "EXAMEN": "Examen",
       "AUTRE": "Autre"
     }
+  },
+  "landing": {
+    "title": "ÉCOLE OBJECTIF PREPA",
+    "subtitle": "Votre Partenaire vers l'Excellence",
+    "description": "Nous accompagnons nos étudiants dans la réussite de leurs concours et examens grâce à une expertise pédagogique de haut niveau et un suivi personnalisé.",
+    "cta": "Accéder à l'espace",
+    "contact": "Contactez-nous"
   }
 }
