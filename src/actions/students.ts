@@ -1,7 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { Role } from "@prisma/client";
+import { Role } from "@/types/prisma";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 
@@ -153,7 +153,7 @@ export async function getTeacherStudents(teacherProfileId: string, search = "", 
       select: { classId: true }
     });
 
-    const classIds = Array.from(new Set(teacherCourses.map(c => c.classId).filter(Boolean)));
+    const classIds = Array.from(new Set(teacherCourses.map((c: { classId: any; }) => c.classId).filter(Boolean)));
 
     if (classIds.length === 0) {
       return { students: [], total: 0, totalPages: 0 };
@@ -254,7 +254,7 @@ export async function getStudentSchedule(userId: string, startDate: Date) {
 
     if (!student) return { courses: [] };
 
-    const classIds = student.classes.map(c => c.id);
+    const classIds = student.classes.map((c: { id: any; }) => c.id);
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + 7);
 

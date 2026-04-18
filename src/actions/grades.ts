@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { EvaluationType } from "@prisma/client";
+import { EvaluationType } from "@/types/prisma";
 
 export async function getTeacherEvaluations(teacherProfileId: string) {
   try {

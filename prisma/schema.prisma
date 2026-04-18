@@ -74,6 +74,7 @@ model Subject {
   courses     Course[]
   students    StudentProfile[]
   evaluations Evaluation[]
+  resources   SubjectResource[]
 }
 
 model Class {
@@ -83,6 +84,7 @@ model Class {
   courses       Course[]
   notifications Notification[]
   evaluations   Evaluation[]
+  resources     SubjectResource[]
 }
 
 enum Recurrence {
@@ -147,6 +149,19 @@ model Attendance {
   @@index([studentId])
   @@index([courseId])
   @@index([date])
+}
+
+model SubjectResource {
+  id        String   @id @default(cuid())
+  name      String
+  link      String
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  classes   Class[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([subjectId])
 }
 
 model Payment {

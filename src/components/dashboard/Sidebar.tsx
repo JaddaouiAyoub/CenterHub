@@ -18,7 +18,8 @@ import {
   School,
   Library,
   Bell,
-  FileText
+  FileText,
+  FolderOpen
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -26,7 +27,7 @@ import { useParams, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 
-export function SidebarContent({ role, onNavigate }: { role: string; onNavigate?: () => void }) {
+export function SidebarContent({ role: sessionRole, onNavigate }: { role: string; onNavigate?: () => void }) {
   const t = useTranslations("dashboard");
   const params = useParams();
   const pathname = usePathname();
@@ -34,7 +35,8 @@ export function SidebarContent({ role, onNavigate }: { role: string; onNavigate?
 
   const getLinks = () => {
     const base = `/${locale}/dashboard`;
-    const links = [
+    const role = sessionRole?.toUpperCase();
+    const links: any[] = [
       { href: base, label: t("title"), icon: LayoutDashboard },
     ];
 
@@ -48,6 +50,7 @@ export function SidebarContent({ role, onNavigate }: { role: string; onNavigate?
         { href: `${base}/schedule`, label: "Emploi du temps", icon: Calendar },
         { href: `${base}/attendance`, label: "Mes Absences", icon: BookOpenCheck },
         { href: `${base}/students`, label: "Mes Étudiants", icon: BookOpen },
+        { href: `${base}/resources`, label: "Ressources", icon: FolderOpen },
         { href: `${base}/grades`, label: t("gradesLink") || "Notes", icon: FileText },
         { href: `${base}/notifications`, label: "Notifications", icon: Bell }
       );
@@ -60,7 +63,7 @@ export function SidebarContent({ role, onNavigate }: { role: string; onNavigate?
       links.push(
         { href: `${base}/schedule`, label: "Emploi du Temps", icon: Calendar },
         { href: `${base}/attendance`, label: "Mes Absences", icon: BookOpenCheck },
-        { href: `${base}/resources`, label: "Ressources", icon: Library },
+        { href: `${base}/resources`, label: "Ressources", icon: FolderOpen },
         { href: `${base}/grades`, label: "Mes Notes", icon: FileText },
         { href: `${base}/payments`, label: "Mes Paiements", icon: CreditCard },
         { href: `${base}/notifications`, label: "Notifications", icon: Bell }
@@ -71,6 +74,7 @@ export function SidebarContent({ role, onNavigate }: { role: string; onNavigate?
         { href: `${base}/students`, label: "Étudiants", icon: GraduationCap },
         { href: `${base}/subjects`, label: "Matières", icon: Library },
         { href: `${base}/classes`, label: "Classes", icon: School },
+        { href: `${base}/resources`, label: "Ressources", icon: FolderOpen },
         { href: `${base}/courses`, label: "Cours", icon: Calendar },
         { href: `${base}/attendance`, label: "Absences", icon: BookOpenCheck },
         { href: `${base}/payments`, label: "Facturation", icon: CreditCard },

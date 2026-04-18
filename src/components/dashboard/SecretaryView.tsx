@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { User } from "next-auth";
+import { useParams, useRouter } from "next/navigation";
 import { 
   Users, 
   GraduationCap, 
@@ -10,15 +11,21 @@ import {
   TrendingUp,
   AlertCircle,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  FolderOpen,
+  ChevronRight
 } from "lucide-react";
 import { getDashboardStats } from "@/actions/stats";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export function SecretaryView({ user }: { user: User }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const params = useParams();
+  const router = useRouter();
+  const locale = params.locale as string;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,6 +47,15 @@ export function SecretaryView({ user }: { user: User }) {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Tableau de Bord Secrétariat</h1>
           <p className="text-slate-500 mt-1">Aperçu global de l'activité du centre.</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="outline" 
+            className="rounded-xl border-slate-200"
+            onClick={() => router.push(`/${locale}/dashboard/resources`)}
+          >
+            <FolderOpen className="w-4 h-4 mr-2" /> Gérer Ressources
+          </Button>
         </div>
       </div>
 
@@ -103,6 +119,23 @@ export function SecretaryView({ user }: { user: User }) {
               </div>
             </div>
             <p className="text-xs text-slate-400 mt-4">Total encaissé à ce jour</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-none shadow-sm hover:shadow-md transition-shadow cursor-pointer group bg-indigo-50 border-indigo-100" onClick={() => router.push(`/${locale}/dashboard/resources`)}>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-indigo-600 text-sm font-medium">Ressources</p>
+                <h3 className="text-2xl font-bold mt-1 text-indigo-900">Gérer</h3>
+              </div>
+              <div className="p-3 bg-white text-indigo-600 rounded-xl shadow-sm group-hover:scale-110 transition-transform">
+                <FolderOpen className="w-6 h-6" />
+              </div>
+            </div>
+            <p className="text-xs text-indigo-500 mt-4 flex items-center group-hover:translate-x-1 transition-transform font-medium">
+              Cours & Supports <ChevronRight className="w-3 h-3 ml-1" />
+            </p>
           </CardContent>
         </Card>
       </div>

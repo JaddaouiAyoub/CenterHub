@@ -1,7 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { Role } from "@prisma/client";
+import { Role } from "@/types/prisma";
 
 export async function getDashboardStats() {
   try {

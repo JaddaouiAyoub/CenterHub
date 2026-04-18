@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { getStudentProfileByUserId } from "@/actions/students";
-import { StudentResources } from "@/components/dashboard/student/StudentResources";
+import { SubjectResourceManager } from "@/components/dashboard/resources/SubjectResourceManager";
+import { getSubjects, getClasses } from "@/actions/courses";
 
 export default async function ResourcesPage() {
   const session = await auth();
@@ -11,27 +11,18 @@ export default async function ResourcesPage() {
   }
 
   const role = session.user.role;
-
-  if (role !== "STUDENT") {
-    // For now, only students have a dedicated unified resources page
-    // Teachers see resources per course in their schedule.
-    redirect("/dashboard");
-  }
-
-  const profile = await getStudentProfileByUserId(session.user.id!);
-
-  if (!profile) {
-    return (
-      <div className="p-8 text-center bg-red-50 rounded-xl border border-red-100">
-        <h2 className="text-red-800 font-bold text-lg">Profil non trouvé</h2>
-        <p className="text-red-600">Impossible de charger votre profil d'étudiant.</p>
-      </div>
-    );
-  }
+  const subjects = await getSubjects();
+  const classes = await getClasses();
+  const studentId = role === "STUDENT" ? session.user.id : undefined;
 
   return (
     <div className="p-6">
-      <StudentResources profile={profile} />
+      <SubjectResourceManager 
+        role={role} 
+        subjects={subjects} 
+        classes={classes} 
+        studentId={studentId}
+      />
     </div>
   );
 }

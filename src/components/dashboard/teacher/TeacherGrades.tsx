@@ -52,7 +52,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { EvaluationType } from "@prisma/client";
+import { EvaluationType } from "@/types/prisma";
 import { useTranslations } from "next-intl";
 
 export function TeacherGrades({ teacherProfileId }: { teacherProfileId: string }) {
