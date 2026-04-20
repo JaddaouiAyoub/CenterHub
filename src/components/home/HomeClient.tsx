@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { LogIn, GraduationCap, Award, BookOpen, CheckCircle2 } from "lucide-react";
+import { LogIn, GraduationCap, Award, BookOpen, CheckCircle2, MessageCircle } from "lucide-react";
 
 export default function HomeClient({ locale }: { locale: string }) {
   const t = useTranslations("landing");
@@ -13,6 +13,31 @@ export default function HomeClient({ locale }: { locale: string }) {
 
   const handleLogin = () => {
     router.push(`/${locale}/login`);
+  };
+
+  // Fonction pour gérer le contact WhatsApp
+  const handleContact = () => {
+    const phoneNumber = "212615986477";
+    const message = encodeURIComponent(
+      "Bonjour Objectif Prépa, je souhaiterais avoir plus d'informations sur vos programmes d'excellence."
+    );
+
+    // Tentative d'ouverture directe via le protocole 'whatsapp://'
+    // Si l'app est installée, elle s'ouvre immédiatement.
+    const whatsappUrl = `whatsapp://send?phone=${phoneNumber}&text=${message}`;
+    
+    // On utilise un petit fallback : si le protocole échoue (cas rare), 
+    // on utilise le lien universel wa.me
+    const fallbackUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+
+    window.location.href = whatsappUrl;
+
+    // Optionnel : Sécurité pour les vieux navigateurs desktop
+    setTimeout(() => {
+        if (document.hasFocus()) {
+            window.open(fallbackUrl, "_blank");
+        }
+    }, 500);
   };
 
   return (
@@ -84,10 +109,13 @@ export default function HomeClient({ locale }: { locale: string }) {
                 >
                   {t("cta")}
                 </Button>
+                {/* Button Contact mis à jour */}
                 <Button 
+                  onClick={handleContact}
                   variant="outline"
-                  className="h-14 px-8 text-lg border-2 rounded-2xl border-slate-200 hover:bg-slate-50 transition-all"
+                  className="h-14 px-8 text-lg border-2 rounded-2xl border-slate-200 hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
                 >
+                  <MessageCircle className="w-5 h-5 text-green-600" />
                   {t("contact")}
                 </Button>
               </div>
@@ -108,31 +136,28 @@ export default function HomeClient({ locale }: { locale: string }) {
               </div>
             </motion.div>
 
-            {/* Right Image (MODIFIÉE POUR ÊTRE CIRCULAIRE) */}
+            {/* Right Image */}
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1, ease: "easeOut" }}
-              className="relative flex justify-center lg:justify-end" // Centré sur mobile, à droite sur grand écran
+              className="relative flex justify-center lg:justify-end"
             >
-              {/* Conteneur de l'image principale mis à jour pour être un cercle parfait */}
               <div className="relative z-10 rounded-full overflow-hidden shadow-2xl border-[2px] border-white aspect-square w-full max-w-[450px]">
                 <div className="relative w-full h-full">
                   <Image
-                    src="/ahmed4.jpeg" // Chemin vers la nouvelle image circulaire
+                    src="/ahmed4.jpeg"
                     alt="Center Director"
                     fill
-                    className="object-cover" // object-cover pour s'assurer qu'il remplit le cercle
+                    className="object-cover"
                     priority
                   />
                 </div>
               </div>
               
-              {/* Éléments décoratifs (adaptés pour le format circulaire) */}
               <div className="absolute -top-6 -right-6 w-48 h-48 bg-indigo-100 rounded-full mix-blend-multiply filter blur-2xl opacity-70 animate-blob"></div>
               <div className="absolute -bottom-10 left-10 w-48 h-48 bg-pink-100 rounded-full mix-blend-multiply filter blur-2xl opacity-70 animate-blob animation-delay-2000"></div>
               
-              {/* Badge d'expertise (repositionné légèrement pour le cercle) */}
               <motion.div 
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -150,7 +175,7 @@ export default function HomeClient({ locale }: { locale: string }) {
         </div>
       </main>
 
-      {/* Feature section minimal */}
+      {/* Feature section */}
       <section className="bg-slate-50 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
