@@ -143,7 +143,7 @@ export default function HomeClient({ locale }: { locale: string }) {
                   <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Expertise</p>
                 </div>
-                <p className="font-bold text-slate-900 text-sm">Plus de 5 ans d'expérience</p>
+                <p className="font-bold text-slate-900 text-sm">Plus de 15 ans d'expérience</p>
               </motion.div>
             </motion.div>
           </div>
