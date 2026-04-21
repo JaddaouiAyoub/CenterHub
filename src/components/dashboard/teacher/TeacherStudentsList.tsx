@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PaginationControls } from "@/components/ui/pagination-controls";
+import { CsvExportButton } from "@/components/ui/csv-export-button";
 import { Search, GraduationCap, Users } from "lucide-react";
 import { toast } from "sonner";
 
@@ -62,13 +63,25 @@ export function TeacherStudentsList({ teacherProfileId }: { teacherProfileId: st
             <p className="text-sm text-slate-500">Liste des élèves inscrits dans vos classes.</p>
           </div>
         </div>
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input 
-            placeholder="Rechercher par nom..." 
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="pl-9 border-slate-200 focus:ring-indigo-500"
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:flex-none sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input 
+              placeholder="Rechercher par nom..." 
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              className="pl-9 border-slate-200 focus:ring-indigo-500"
+            />
+          </div>
+          <CsvExportButton
+            data={students}
+            filename="mes_etudiants"
+            columns={[
+              { label: "Nom", value: (s) => s.name },
+              { label: "Email", value: (s) => s.email },
+              { label: "Classes", value: (s) => s.studentProfile?.classes?.map((c: any) => c.name).join(" | ") ?? "" },
+              { label: "Matières", value: (s) => s.studentProfile?.subjects?.map((sub: any) => sub.name).join(" | ") ?? "" },
+            ]}
           />
         </div>
       </div>

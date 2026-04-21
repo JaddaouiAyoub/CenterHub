@@ -207,6 +207,25 @@ export async function getTeacherStudents(teacherProfileId: string, search = "", 
   }
 }
 
+/** Optimised action for dropdowns — returns only the fields needed for a <select>.
+ *  Does NOT paginate so all students are available in the form. */
+export async function getAllStudentsForSelect() {
+  try {
+    const students = await prisma.user.findMany({
+      where: { role: Role.STUDENT },
+      select: {
+        id: true,
+        name: true,
+        studentProfile: { select: { id: true } }
+      },
+      orderBy: { name: "asc" }
+    });
+    return { students };
+  } catch (error) {
+    return { error: "Failed to fetch students for select" };
+  }
+}
+
 export async function getStudentProfileByUserId(userId: string) {
   try {
     const profile = await prisma.studentProfile.findUnique({

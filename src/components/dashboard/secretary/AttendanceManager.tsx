@@ -17,6 +17,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle2, XCircle, Clock, Search, Calendar as CalendarIcon, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { CsvExportButton } from "@/components/ui/csv-export-button";
 
 export function AttendanceManager() {
   const [courses, setCourses] = useState<any[]>([]);
@@ -28,12 +30,20 @@ export function AttendanceManager() {
 
   useEffect(() => {
     const fetchCourses = async () => {
-      const date = new Date(selectedDate);
-      date.setHours(0, 0, 0, 0);
-      const res = await getCoursesForAttendance(date);
-      if (res.courses) setCourses(res.courses);
-      if (res.courses && !res.courses.find(c => c.id === selectedCourse)) {
-        setSelectedCourse(null);
+      try {
+        const date = new Date(selectedDate);
+        date.setHours(0, 0, 0, 0);
+        const res = await getCoursesForAttendance(date);
+        if (res.courses) {
+          setCourses(res.courses);
+          if (!res.courses.find((c: any) => c.id === selectedCourse)) {
+            setSelectedCourse(null);
+          }
+        } else {
+          toast.error("Erreur lors du chargement des cours");
+        }
+      } catch {
+        toast.error("Impossible de charger les cours pour cette date");
       }
     };
     fetchCourses();
@@ -128,7 +138,25 @@ export function AttendanceManager() {
           <p className="text-slate-500 animate-pulse font-medium">Chargement de la liste d'appel...</p>
         </div>
       ) : students.length > 0 ? (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="space-y-3">
+          <div className="flex justify-end">
+            <CsvExportButton
+              data={students}
+              filename="presences_secretaire"
+              columns={[
+                { label: "Nom", value: (s) => s.user.name },
+                { label: "Statut", value: (s) => {
+                  const st = attendanceRecords[s.id];
+                  if (st === "PRESENT") return "PRÉSENT";
+                  if (st === "ABSENT") return "ABSENT";
+                  if (st === "LATE") return "RETARD";
+                  return "Non renseigné";
+                }},
+                { label: "Date", value: () => selectedDate },
+              ]}
+            />
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <Table>
             <TableHeader className="bg-slate-50/50">
               <TableRow>
@@ -209,6 +237,7 @@ export function AttendanceManager() {
           <div className="bg-slate-50 p-4 text-center border-t border-slate-100">
              <p className="text-xs text-slate-500">Les modifications sont enregistrées automatiquement après chaque clic.</p>
           </div>
+        </div>
         </div>
       ) : selectedCourse && !loading && (
         <div className="bg-white rounded-2xl p-12 text-center border border-dashed border-slate-200">

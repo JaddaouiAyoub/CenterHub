@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { School, Plus, Trash2, Edit } from "lucide-react";
+import { CsvExportButton } from "@/components/ui/csv-export-button";
 
 export function ClassesList() {
   const [classes, setClasses] = useState<any[]>([]);
@@ -87,6 +88,13 @@ export function ClassesList() {
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full sm:w-64 border-slate-200"
+          />
+          <CsvExportButton
+            data={classes}
+            filename="classes"
+            columns={[
+              { label: "Nom de la classe", value: (c) => c.name },
+            ]}
           />
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger render={

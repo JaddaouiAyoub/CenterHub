@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CheckCircle2, XCircle, Clock, Search, Calendar as CalendarIcon, Users, BookOpenCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { CsvExportButton } from "@/components/ui/csv-export-button";
 
 export function TeacherAttendance({ teacherProfileId }: { teacherProfileId: string }) {
   const [courses, setCourses] = useState<any[]>([]);
@@ -138,7 +139,27 @@ export function TeacherAttendance({ teacherProfileId }: { teacherProfileId: stri
           <p className="text-slate-500 font-medium">Récupération des élèves...</p>
         </div>
       ) : students.length > 0 ? (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="space-y-3">
+          <div className="flex justify-end">
+            <CsvExportButton
+              data={students}
+              filename="liste_appel"
+              columns={[
+                { label: "Nom", value: (s) => s.user.name },
+                { label: "ID (abrégé)", value: (s) => s.id.slice(-6) },
+                { label: "Statut", value: (s) => {
+                  const st = attendanceRecords[s.id];
+                  if (st === "PRESENT") return "PRÉSENT";
+                  if (st === "ABSENT") return "ABSENT";
+                  if (st === "LATE") return "RETARD";
+                  return "En attente";
+                }},
+                { label: "Cours", value: () => selectedCourseData ? `${selectedCourseData.subject.name} - ${selectedCourseData.class.name}` : "" },
+                { label: "Date", value: () => selectedDate },
+              ]}
+            />
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <Table>
             <TableHeader className="bg-slate-50">
               <TableRow>
@@ -210,6 +231,7 @@ export function TeacherAttendance({ teacherProfileId }: { teacherProfileId: stri
               ))}
             </TableBody>
           </Table>
+        </div>
         </div>
       ) : selectedCourse && !loading && (
         <div className="bg-white rounded-2xl p-16 text-center border border-slate-100 shadow-sm">

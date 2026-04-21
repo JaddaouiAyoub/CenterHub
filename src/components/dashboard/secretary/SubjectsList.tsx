@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { BookOpen, Edit, Plus, Trash2 } from "lucide-react";
+import { CsvExportButton } from "@/components/ui/csv-export-button";
 
 export function SubjectsList() {
   const [subjects, setSubjects] = useState<any[]>([]);
@@ -87,6 +88,13 @@ export function SubjectsList() {
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full sm:w-64 border-slate-200"
+          />
+          <CsvExportButton
+            data={subjects}
+            filename="matieres"
+            columns={[
+              { label: "Nom de la matière", value: (s) => s.name },
+            ]}
           />
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger render={

@@ -92,9 +92,9 @@ export async function getTeacherSubjectsClasses(teacherProfileId: string) {
   try {
     const courses = await prisma.course.findMany({
       where: { teacherId: teacherProfileId },
-      include: {
-        subject: true,
-        class: true
+      select: {
+        subject: { select: { id: true, name: true } },
+        class: { select: { id: true, name: true } }
       }
     });
 
@@ -132,12 +132,12 @@ export async function getStudentsForGrades(evaluationId: string) {
         classes: { some: { id: evaluation.classId } },
         subjects: { some: { id: evaluation.subjectId } }
       },
-      include: {
-        user: {
-          select: { name: true, image: true }
-        },
+      select: {
+        id: true,
+        user: { select: { name: true, image: true } },
         grades: {
-          where: { evaluationId }
+          where: { evaluationId },
+          select: { id: true, value: true, comment: true }
         }
       }
     });

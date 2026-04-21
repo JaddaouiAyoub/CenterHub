@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { UserPlus, Trash2, Edit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { CsvExportButton } from "@/components/ui/csv-export-button";
 
 export function TeachersList() {
   const [teachers, setTeachers] = useState<any[]>([]);
@@ -108,6 +109,15 @@ export function TeachersList() {
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full sm:w-64 border-slate-200"
+          />
+          <CsvExportButton
+            data={teachers}
+            filename="enseignants"
+            columns={[
+              { label: "Nom", value: (t) => t.name },
+              { label: "Email", value: (t) => t.email },
+              { label: "Spécialisation", value: (t) => t.teacherProfile?.specialization ?? "Non définie" },
+            ]}
           />
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger render={

@@ -54,6 +54,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { EvaluationType } from "@/types/prisma";
 import { useTranslations } from "next-intl";
+import { CsvExportButton } from "@/components/ui/csv-export-button";
 
 export function TeacherGrades({ teacherProfileId }: { teacherProfileId: string }) {
   const t = useTranslations("grades");
@@ -200,6 +201,19 @@ export function TeacherGrades({ teacherProfileId }: { teacherProfileId: string }
             <p className="text-slate-500">{selectedEvaluation.subject.name} • {selectedEvaluation.class.name}</p>
           </div>
           <div className="ml-auto flex space-x-2">
+            <CsvExportButton
+              data={students}
+              filename={`notes_${selectedEvaluation.title.replace(/\s+/g, '_')}`}
+              columns={[
+                { label: "Nom de l'étudiant", value: (s) => s.user.name },
+                { label: "Note / 20", value: (s) => gradeValues[s.id]?.value ?? "" },
+                { label: "Commentaire", value: (s) => gradeValues[s.id]?.comment ?? "" },
+                { label: "Évaluation", value: () => selectedEvaluation.title },
+                { label: "Matière", value: () => selectedEvaluation.subject.name },
+                { label: "Classe", value: () => selectedEvaluation.class.name },
+                { label: "Date", value: () => new Date(selectedEvaluation.date).toLocaleDateString('fr-FR') },
+              ]}
+            />
             <Button 
               variant="outline" 
               onClick={() => handleSaveGrades(false)}
@@ -286,6 +300,20 @@ export function TeacherGrades({ teacherProfileId }: { teacherProfileId: string }
           <h1 className="text-2xl font-bold text-slate-900">{t("title")}</h1>
           <p className="text-slate-500">Gérez les évaluations et les résultats de vos classes.</p>
         </div>
+        <div className="flex items-center gap-3">
+          <CsvExportButton
+            data={evaluations}
+            filename="evaluations"
+            columns={[
+              { label: "Titre", value: (ev) => ev.title },
+              { label: "Type", value: (ev) => ev.type },
+              { label: "Matière", value: (ev) => ev.subject.name },
+              { label: "Classe", value: (ev) => ev.class.name },
+              { label: "Date", value: (ev) => new Date(ev.date).toLocaleDateString('fr-FR') },
+              { label: "Statut", value: (ev) => ev.isPublished ? "Publié" : "Brouillon" },
+              { label: "Notes saisies", value: (ev) => ev._count.grades },
+            ]}
+          />
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger render={
@@ -369,6 +397,7 @@ export function TeacherGrades({ teacherProfileId }: { teacherProfileId: string }
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

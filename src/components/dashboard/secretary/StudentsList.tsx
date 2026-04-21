@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { UserPlus, Trash2, Edit, GraduationCap } from "lucide-react";
+import { CsvExportButton } from "@/components/ui/csv-export-button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -42,21 +43,29 @@ export function StudentsList() {
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
+  // Load static data (classes & subjects) only once on mount
+  useEffect(() => {
+    const fetchStaticData = async () => {
+      try {
+        const [cData, subData] = await Promise.all([getClasses(), getSubjects()]);
+        setClasses(cData || []);
+        setSubjects(subData || []);
+      } catch {
+        toast.error("Erreur de chargement des classes/matières");
+      }
+    };
+    fetchStaticData();
+  }, []);
+
   const fetchData = async () => {
     try {
-      const [sRes, cData, subData] = await Promise.all([
-        getStudents(search, page, pageSize), 
-        getClasses(),
-        getSubjects()
-      ]);
+      const sRes = await getStudents(search, page, pageSize);
       if (sRes.students) {
         setStudents(sRes.students);
         setTotalItems(sRes.total || 0);
         setTotalPages(sRes.totalPages || 1);
       }
       if (sRes.error) toast.error(sRes.error);
-      setClasses(cData || []);
-      setSubjects(subData || []);
     } catch (error) {
       toast.error("Erreur de chargement des données");
     } finally {
@@ -127,6 +136,17 @@ export function StudentsList() {
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full sm:w-64 border-slate-200"
+          />
+          <CsvExportButton
+            data={students}
+            filename="etudiants"
+            columns={[
+              { label: "Nom", value: (s) => s.name },
+              { label: "Email", value: (s) => s.email },
+              { label: "Classes", value: (s) => s.studentProfile?.classes?.map((c: any) => c.name).join(" | ") ?? "" },
+              { label: "Matières", value: (s) => s.studentProfile?.subjects?.map((sub: any) => sub.name).join(" | ") ?? "" },
+              { label: "Date d'inscription", value: (s) => new Date(s.createdAt).toLocaleDateString('fr-FR') },
+            ]}
           />
           <Dialog open={isRegisterOpen} onOpenChange={(open) => {
             setIsRegisterOpen(open);

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getPayments, createPayment, deletePayment, updatePaymentStatus, updatePayment } from "@/actions/payments";
-import { getStudents } from "@/actions/students";
+import { getAllStudentsForSelect } from "@/actions/students";
 import { getStudentAvailableCourses } from "@/actions/courses";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 import { MultiSelect } from "@/components/ui/multi-select";
@@ -22,6 +22,7 @@ import { CreditCard, Trash2, Plus, Search, DollarSign, Wallet, Edit, CheckCircle
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { CsvExportButton } from "@/components/ui/csv-export-button";
 
 const MONTHS = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
@@ -48,7 +49,7 @@ export function PaymentManager() {
 
   const fetchData = async () => {
     try {
-      const [p, s] = await Promise.all([getPayments(search, page, pageSize), getStudents()]);
+      const [p, s] = await Promise.all([getPayments(search, page, pageSize), getAllStudentsForSelect()]);
       if (p.payments) {
         setPayments(p.payments);
         setTotalItems(p.total || 0);
@@ -132,6 +133,18 @@ export function PaymentManager() {
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full sm:w-64 border-slate-200"
+          />
+          <CsvExportButton
+            data={payments}
+            filename="paiements"
+            columns={[
+              { label: "Étudiant", value: (p) => p.student.user.name },
+              { label: "Période", value: (p) => `${MONTHS[p.month - 1]} ${p.year}` },
+              { label: "Montant (DHS)", value: (p) => p.amount.toFixed(2) },
+              { label: "Moyen", value: (p) => p.method },
+              { label: "Statut", value: (p) => p.status === "PAID" ? "Payé" : p.status === "PARTIAL" ? "Partiel" : "En attente" },
+              { label: "Cours", value: (p) => p.courses?.map((c: any) => c.subject.name).join(" | ") ?? "" },
+            ]}
           />
           <Dialog open={isPaymentOpen} onOpenChange={(open) => {
             setIsPaymentOpen(open);
