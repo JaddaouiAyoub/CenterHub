@@ -14,7 +14,7 @@ import { getStudentSchedule } from "@/actions/students";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { 
   Dialog, 
   DialogContent, 
@@ -22,6 +22,7 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import { ResourceManager } from "../teacher/ResourceManager";
 
 const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
@@ -183,15 +184,9 @@ export function StudentSchedule({ profile }: { profile: any }) {
                         )}
                         
                         <Dialog>
-                          <DialogTrigger render={
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="w-full h-8 text-[11px] text-slate-600 border-slate-100 hover:bg-slate-50 font-bold"
-                            >
-                              <FileText className="w-3 h-3 mr-2" /> Documents
-                            </Button>
-                          } />
+                          <DialogTrigger className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-full h-8 text-[11px] text-slate-600 border-slate-100 hover:bg-slate-50 font-bold")}>
+                            <FileText className="w-3 h-3 mr-2" /> Documents
+                          </DialogTrigger>
                           <DialogContent className="sm:max-w-4xl">
                             <DialogHeader>
                               <DialogTitle>Supports de cours : {c.name}</DialogTitle>

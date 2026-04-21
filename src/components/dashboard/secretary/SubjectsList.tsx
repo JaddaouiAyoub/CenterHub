@@ -17,6 +17,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { BookOpen, Edit, Plus, Trash2 } from "lucide-react";
 import { CsvExportButton } from "@/components/ui/csv-export-button";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 export function SubjectsList() {
   const [subjects, setSubjects] = useState<any[]>([]);
@@ -97,11 +99,9 @@ export function SubjectsList() {
             ]}
           />
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger render={
-              <Button className="bg-blue-600 hover:bg-blue-700 shadow-sm shadow-blue-200 whitespace-nowrap">
-                <Plus className="w-4 h-4 mr-2" /> Nouvelle Matière
-              </Button>
-            } />
+            <DialogTrigger className={cn(buttonVariants({ variant: "default" }), "bg-blue-600 hover:bg-blue-700 shadow-sm shadow-blue-200 whitespace-nowrap")}>
+              <Plus className="w-4 h-4 mr-2" /> Nouvelle Matière
+            </DialogTrigger>
           <DialogContent className="sm:max-w-xl overflow-hidden border-none p-0 bg-white/95 backdrop-blur-xl shadow-2xl">
             <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-white text-center">
               <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">

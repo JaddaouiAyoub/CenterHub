@@ -15,8 +15,9 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { 
   Table, 
   TableBody, 
@@ -251,7 +252,10 @@ export function SubjectResourceManager({
                             </Button>
                             <DropdownMenu>
                               <DropdownMenuTrigger
-                                render={<Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600" />}
+                                className={cn(
+                                  buttonVariants({ variant: "ghost", size: "icon" }),
+                                  "h-8 w-8 text-slate-400 hover:text-slate-600"
+                                )}
                               >
                                 <MoreVertical className="w-4 h-4" />
                               </DropdownMenuTrigger>

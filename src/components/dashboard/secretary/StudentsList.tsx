@@ -13,16 +13,17 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { UserPlus, Trash2, Edit, GraduationCap } from "lucide-react";
+import { UserPlus, Trash2, Edit, GraduationCap, Eye, EyeOff } from "lucide-react";
 import { CsvExportButton } from "@/components/ui/csv-export-button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export function StudentsList() {
   const [students, setStudents] = useState<any[]>([]);
@@ -35,6 +36,7 @@ export function StudentsList() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
+  const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
 
   // Pagination & Search
   const [search, setSearch] = useState("");
@@ -145,6 +147,7 @@ export function StudentsList() {
               { label: "Email", value: (s) => s.email },
               { label: "Classes", value: (s) => s.studentProfile?.classes?.map((c: any) => c.name).join(" | ") ?? "" },
               { label: "Matières", value: (s) => s.studentProfile?.subjects?.map((sub: any) => sub.name).join(" | ") ?? "" },
+              { label: "Mot de passe", value: (s) => s.studentProfile?.plainPassword || "" },
               { label: "Date d'inscription", value: (s) => new Date(s.createdAt).toLocaleDateString('fr-FR') },
             ]}
           />
@@ -155,11 +158,9 @@ export function StudentsList() {
               setSelectedClasses([]);
             }
           }}>
-            <DialogTrigger render={
-              <Button className="bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-200 whitespace-nowrap">
-                <UserPlus className="w-4 h-4 mr-2" /> Nouvelle Inscription
-              </Button>
-            } />
+            <DialogTrigger className={cn(buttonVariants({ variant: "default" }), "bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-200 whitespace-nowrap")}>
+              <UserPlus className="w-4 h-4 mr-2" /> Nouvelle Inscription
+            </DialogTrigger>
 
           <DialogContent className="sm:max-w-2xl overflow-hidden border-none p-0 bg-white/95 backdrop-blur-xl shadow-2xl">
             <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 text-white text-center">
@@ -303,6 +304,7 @@ export function StudentsList() {
             <TableRow>
               <TableHead className="font-semibold text-slate-700">Étudiant</TableHead>
               <TableHead className="font-semibold text-slate-700">Classe</TableHead>
+              <TableHead className="font-semibold text-slate-700">Mot de Passe</TableHead>
               <TableHead className="font-semibold text-slate-700">Date d'inscription</TableHead>
               <TableHead className="text-right font-semibold text-slate-700">Actions</TableHead>
             </TableRow>
@@ -348,6 +350,21 @@ export function StudentsList() {
                           ))}
                         </div>
                       )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                       <span className="text-sm font-mono bg-slate-50 px-2 py-1 rounded border border-slate-100">
+                         {visiblePasswords[s.id] ? (s.studentProfile?.plainPassword || "---") : "••••••••"}
+                       </span>
+                       <Button
+                         variant="ghost"
+                         size="icon"
+                         className="h-8 w-8 text-slate-400 hover:text-indigo-600"
+                         onClick={() => setVisiblePasswords(prev => ({ ...prev, [s.id]: !prev[s.id] }))}
+                       >
+                         {visiblePasswords[s.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                       </Button>
                     </div>
                   </TableCell>
                   <TableCell className="text-slate-500 text-sm">

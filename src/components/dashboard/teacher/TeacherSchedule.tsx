@@ -14,8 +14,9 @@ import {
   FileText,
   Plus
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { 
   Dialog, 
   DialogContent, 
@@ -190,14 +191,8 @@ export function TeacherSchedule({ teacherProfileId }: { teacherProfileId: string
                         )}
                         
                         <Dialog>
-                          <DialogTrigger>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="w-full h-8 text-[11px] text-slate-600 border-slate-100 hover:bg-slate-50"
-                            >
-                              <FileText className="w-3 h-3 mr-2" /> Documents et Supports
-                            </Button>
+                          <DialogTrigger className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-full h-8 text-[11px] text-slate-600 border-slate-100 hover:bg-slate-50")}>
+                            <FileText className="w-3 h-3 mr-2" /> Documents et Supports
                           </DialogTrigger>
                           <DialogContent className="sm:max-w-4xl">
                             <DialogHeader>

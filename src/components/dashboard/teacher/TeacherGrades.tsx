@@ -18,7 +18,7 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { 
@@ -55,6 +55,7 @@ import { toast } from "sonner";
 import { EvaluationType } from "@/types/prisma";
 import { useTranslations } from "next-intl";
 import { CsvExportButton } from "@/components/ui/csv-export-button";
+import { cn } from "@/lib/utils";
 
 export function TeacherGrades({ teacherProfileId }: { teacherProfileId: string }) {
   const t = useTranslations("grades");
@@ -316,11 +317,9 @@ export function TeacherGrades({ teacherProfileId }: { teacherProfileId: string }
           />
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger render={
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6">
-              <Plus className="w-4 h-4 mr-2" /> Nouvelle évaluation
-            </Button>
-          } />
+          <DialogTrigger className={cn(buttonVariants({ variant: "default" }), "bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6")}>
+            <Plus className="w-4 h-4 mr-2" /> Nouvelle évaluation
+          </DialogTrigger>
           <DialogContent className="sm:max-w-[500px] rounded-3xl">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold">Créer une évaluation</DialogTitle>

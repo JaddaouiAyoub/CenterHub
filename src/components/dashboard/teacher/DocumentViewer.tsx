@@ -8,7 +8,8 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { 
   Eye, 
   X, 
@@ -101,16 +102,11 @@ export function DocumentViewer({ id, notificationId, url, name, type, trigger }:
   return (
     <Dialog onOpenChange={(open) => !open && setLoading(true)}>
       <DialogTrigger 
-        render={trigger as ReactElement || (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
-        )}
-      />
+        render={trigger as ReactElement}
+        className={!trigger ? cn(buttonVariants({ variant: "ghost", size: "icon" }), "h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all") : undefined}
+      >
+        {!trigger && <Eye className="w-4 h-4" />}
+      </DialogTrigger>
       <DialogContent className="max-w-5xl w-[95vw] sm:w-[90vw] p-0 bg-transparent border-none shadow-none gap-0">
         <div className="bg-white rounded-t-2xl p-4 flex items-center justify-between border-b border-slate-100 shadow-sm relative z-20">
           <div className="flex items-center space-x-3 overflow-hidden">

@@ -29,6 +29,7 @@ export async function getStudents(search = "", page = 1, pageSize = 10) {
           studentProfile: {
             select: {
               id: true,
+              plainPassword: true,
               classes: { select: { id: true, name: true } },
               subjects: { select: { id: true, name: true } }
             }
@@ -69,6 +70,7 @@ export async function registerStudent(formData: FormData) {
         studentProfile: {
           create: {
             dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+            plainPassword: password,
             classes: {
               connect: classIds.filter(Boolean).map(id => ({ id }))
             },
@@ -117,6 +119,12 @@ export async function updateStudent(id: string, formData: FormData) {
 
     if (password) {
       updateData.password = await bcrypt.hash(password, 10);
+      updateData.studentProfile = {
+        update: {
+          ...updateData.studentProfile.update,
+          plainPassword: password
+        }
+      };
     }
 
     await prisma.user.update({

@@ -56,17 +56,19 @@ model TeacherProfile {
 }
 
 model StudentProfile {
-  id          String       @id @default(cuid())
-  userId      String       @unique
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  dateOfBirth DateTime?
-  classes     Class[]
-  enrollments Enrollment[]
-  payments    Payment[]
-  attendance  Attendance[]
-  subjects    Subject[]
-  grades      Grade[]
+  id            String       @id @default(cuid())
+  userId        String       @unique
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dateOfBirth   DateTime?
+  plainPassword String?
+  classes       Class[]
+  enrollments   Enrollment[]
+  payments      Payment[]
+  attendance    Attendance[]
+  subjects      Subject[]
+  grades        Grade[]
 }
+
 
 model Subject {
   id          String       @id @default(cuid())

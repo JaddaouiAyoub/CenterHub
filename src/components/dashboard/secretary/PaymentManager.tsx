@@ -23,6 +23,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { CsvExportButton } from "@/components/ui/csv-export-button";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 const MONTHS = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
@@ -153,11 +155,9 @@ export function PaymentManager() {
               setSelectedCourses([]);
             }
           }}>
-            <DialogTrigger render={
-              <Button className="bg-amber-600 hover:bg-amber-700 shadow-sm shadow-amber-200 whitespace-nowrap">
-                <Plus className="w-4 h-4 mr-2" /> Enregistrer un paiement
-              </Button>
-            } />
+            <DialogTrigger className={cn(buttonVariants({ variant: "default" }), "bg-amber-600 hover:bg-amber-700 shadow-sm shadow-amber-200 whitespace-nowrap")}>
+              <Plus className="w-4 h-4 mr-2" /> Enregistrer un paiement
+            </DialogTrigger>
 
           <DialogContent className="sm:max-w-2xl overflow-hidden border-none p-0 bg-white/95 backdrop-blur-xl shadow-2xl">
             <div className="bg-gradient-to-r from-amber-600 to-orange-700 p-6 text-white text-center">

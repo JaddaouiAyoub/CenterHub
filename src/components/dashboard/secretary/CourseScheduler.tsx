@@ -20,6 +20,8 @@ import { Calendar, Trash2, Plus, Clock, BookOpen, Users, Edit, Link } from "luci
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
@@ -165,11 +167,9 @@ export function CourseScheduler() {
                <Users className="w-4 h-4 mr-2" /> Classe
             </Button>
           <Dialog open={isCourseOpen} onOpenChange={setIsCourseOpen}>
-            <DialogTrigger render={
-              <Button className="bg-purple-600 hover:bg-purple-700 shadow-sm shadow-purple-200">
-                <Calendar className="w-4 h-4 mr-2" /> Planifier un cours
-              </Button>
-            } />
+            <DialogTrigger className={cn(buttonVariants({ variant: "default" }), "bg-purple-600 hover:bg-purple-700 shadow-sm shadow-purple-200")}>
+              <Calendar className="w-4 h-4 mr-2" /> Planifier un cours
+            </DialogTrigger>
 
             <DialogContent className="sm:max-w-2xl overflow-hidden border-none p-0 bg-white/95 backdrop-blur-xl shadow-2xl">
               <div className="bg-gradient-to-r from-purple-600 to-indigo-700 p-6 text-white text-center">

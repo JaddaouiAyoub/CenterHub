@@ -19,6 +19,8 @@ import { UserPlus, Trash2, Edit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { CsvExportButton } from "@/components/ui/csv-export-button";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 export function TeachersList() {
   const [teachers, setTeachers] = useState<any[]>([]);
@@ -120,11 +122,9 @@ export function TeachersList() {
             ]}
           />
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger render={
-              <Button className="bg-blue-600 hover:bg-blue-700 shadow-sm shadow-blue-200 whitespace-nowrap">
-                <UserPlus className="w-4 h-4 mr-2" /> Ajouter un Enseignant
-              </Button>
-            } />
+            <DialogTrigger className={cn(buttonVariants({ variant: "default" }), "bg-blue-600 hover:bg-blue-700 shadow-sm shadow-blue-200 whitespace-nowrap")}>
+              <UserPlus className="w-4 h-4 mr-2" /> Ajouter un Enseignant
+            </DialogTrigger>
 
           <DialogContent className="sm:max-w-xl overflow-hidden border-none p-0 bg-white/95 backdrop-blur-xl shadow-2xl">
             <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-white text-center">

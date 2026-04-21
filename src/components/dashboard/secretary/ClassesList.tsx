@@ -17,6 +17,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { School, Plus, Trash2, Edit } from "lucide-react";
 import { CsvExportButton } from "@/components/ui/csv-export-button";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 export function ClassesList() {
   const [classes, setClasses] = useState<any[]>([]);
@@ -97,11 +99,9 @@ export function ClassesList() {
             ]}
           />
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger render={
-              <Button className="bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-200 whitespace-nowrap">
-                <Plus className="w-4 h-4 mr-2" /> Nouvelle Classe
-              </Button>
-            } />
+            <DialogTrigger className={cn(buttonVariants({ variant: "default" }), "bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-200 whitespace-nowrap")}>
+              <Plus className="w-4 h-4 mr-2" /> Nouvelle Classe
+            </DialogTrigger>
           <DialogContent className="sm:max-w-xl overflow-hidden border-none p-0 bg-white/95 backdrop-blur-xl shadow-2xl">
             <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 text-white text-center">
               <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
