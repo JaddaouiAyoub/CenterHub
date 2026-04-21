@@ -44,6 +44,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
 import { ResourceForm } from "./ResourceForm";
+import { CsvExportButton } from "@/components/ui/csv-export-button";
 
 export function SubjectResourceManager({ 
   role, 
@@ -135,7 +136,7 @@ export function SubjectResourceManager({
             }}
             className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-6 h-12 font-bold shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5"
           >
-            <Plus className="w-5 h-5 mr-2" /> Nouvelle Séance
+            <Plus className="w-5 h-5 mr-2" /> Nouvelle Ressource
           </Button>
         )}
       </div>
@@ -169,6 +170,18 @@ export function SubjectResourceManager({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="w-full md:w-auto flex items-center">
+              <CsvExportButton
+                data={resources}
+                filename="ressources"
+                columns={[
+                  { label: "Nom de la Séance", value: (r) => r.name },
+                  { label: "Matière", value: (r) => r.subject?.name || "" },
+                  { label: "Lien", value: (r) => r.link || "" },
+                  { label: "Ajouté le", value: (r) => r.createdAt ? format(new Date(r.createdAt), "d MMM yyyy", { locale: fr }) : "" },
+                ]}
+              />
             </div>
           </div>
         </CardHeader>
