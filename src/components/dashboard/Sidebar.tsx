@@ -91,7 +91,7 @@ export function SidebarContent({ role: sessionRole, onNavigate }: { role: string
     <div className="h-full bg-slate-900 text-white flex flex-col w-full">
       <div className="p-6">
         <div className="flex items-center space-x-3 rtl:space-x-reverse">
-          <ShieldCheck className="w-8 h-8 text-blue-400 shrink-0" />
+          <GraduationCap className="w-8 h-8 text-blue-400 shrink-0" />
           <span className="text-xl font-bold tracking-tight">ObjectifPrepa </span>
         </div>
       </div>
