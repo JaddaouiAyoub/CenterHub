@@ -53,9 +53,9 @@ export async function getStudentResources(studentId: string) {
     if (!student) return { resources: [] };
 
     const resources: any[] = [];
-    student.classes.forEach(cl => {
+    student.classes.forEach((cl: { courses: any[]; }) => {
       cl.courses.forEach(c => {
-        c.resources.forEach(r => {
+        c.resources.forEach((r: any) => {
           resources.push({
             ...r,
             courseName: c.name,
