@@ -26,6 +26,7 @@ import { useParams } from "next/navigation";
 import { getStudentProfileByUserId } from "@/actions/students";
 import { getStudentAttendanceHistory } from "@/actions/attendance";
 import { getStudentPayments } from "@/actions/payments";
+import { getUnreadSubjectResourcesCount } from "@/actions/subjectResources";
 
 const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
@@ -37,6 +38,7 @@ export function StudentView({ user }: { user: User }) {
   const [profile, setProfile] = useState<any>(null);
   const [attendance, setAttendance] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
+  const [unreadResources, setUnreadResources] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,12 +47,14 @@ export function StudentView({ user }: { user: User }) {
       const studentProfile = await getStudentProfileByUserId(user.id);
       setProfile(studentProfile);
       if (studentProfile) {
-        const [attRes, payRes] = await Promise.all([
+        const [attRes, payRes, unreadRes] = await Promise.all([
           getStudentAttendanceHistory(studentProfile.id),
           getStudentPayments(studentProfile.id),
+          getUnreadSubjectResourcesCount(user.id)
         ]);
         if (attRes.attendance) setAttendance(attRes.attendance);
         if (payRes.payments) setPayments(payRes.payments);
+        setUnreadResources(unreadRes);
       }
       setLoading(false);
     };
@@ -375,10 +379,15 @@ export function StudentView({ user }: { user: User }) {
                   <div className="p-2.5 bg-white/20 rounded-xl">
                     <FileText className="w-5 h-5 text-white" />
                   </div>
-                  <div>
-                    <h4 className="font-black text-lg leading-tight">Documents & Supports</h4>
-                    <p className="text-blue-200 text-xs font-medium">Cours et matériaux pédagogiques</p>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-black text-lg leading-tight truncate">Documents & Supports</h4>
+                    <p className="text-blue-200 text-xs font-medium truncate">Cours et matériaux pédagogiques</p>
                   </div>
+                  {unreadResources > 0 && (
+                    <Badge className="bg-red-500 hover:bg-red-600 text-white font-bold border-none shadow-lg animate-pulse">
+                      {unreadResources} NOUVEAU
+                    </Badge>
+                  )}
                 </div>
                 <Button className="w-full bg-white text-blue-700 hover:bg-blue-50 font-bold text-xs uppercase tracking-widest h-10 rounded-xl border-none shadow-none">
                   Accéder aux ressources <ArrowRight className="w-3.5 h-3.5 ml-2" />

@@ -39,7 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getSubjectResources, deleteSubjectResource } from "@/actions/subjectResources";
+import { getSubjectResources, deleteSubjectResource, markSubjectResourceViewed } from "@/actions/subjectResources";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
@@ -192,7 +192,8 @@ export function SubjectResourceManager({
                 <TableRow>
                   <TableHead className="w-[30%]">Nom de la Séance</TableHead>
                   <TableHead className="w-[20%] text-center">Matière</TableHead>
-                  {!isStudent && <TableHead className="text-center w-[20%]">Ajouté le</TableHead>}
+                  {!isStudent && <TableHead className="text-center w-[15%]">Ajouté le</TableHead>}
+                  {!isStudent && <TableHead className="text-center w-[15%]">Vues</TableHead>}
                   {isStudent && <TableHead className="text-center w-[20%]">Lien</TableHead>}
                   {!isStudent && <TableHead className="text-center w-[20%]">Actions</TableHead>}
                 </TableRow>
@@ -201,12 +202,12 @@ export function SubjectResourceManager({
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i} className="animate-pulse bg-white border-b border-slate-50/50">
-                      <TableCell colSpan={canEdit ? 4 : 3} className="h-16"></TableCell>
+                      <TableCell colSpan={canEdit ? 5 : 3} className="h-16"></TableCell>
                     </TableRow>
                   ))
                 ) : resources.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={canEdit ? 4 : 3} className="h-64 text-center">
+                    <TableCell colSpan={canEdit ? 5 : 3} className="h-64 text-center">
                       <div className="flex flex-col items-center justify-center opacity-40">
                         <FileText className="w-12 h-12 mb-4" />
                         <p className="font-bold">Aucune ressource trouvée</p>
@@ -221,7 +222,12 @@ export function SubjectResourceManager({
                           <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                             <FileText className="w-4 h-4" />
                           </div>
-                          <span>{resource.name}</span>
+                          <span className="flex items-center">
+                            {resource.name}
+                            {isStudent && resource.isViewed === false && (
+                              <Badge className="ml-2 bg-red-500 hover:bg-red-600 font-bold border-none text-[9px] h-4" variant="destructive">NOUVEAU</Badge>
+                            )}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
@@ -231,11 +237,18 @@ export function SubjectResourceManager({
                       </TableCell>
                       
                       {!isStudent && (
-                        <TableCell className="text-center">
-                          <span className="text-slate-500 text-sm">
-                            {format(new Date(resource.createdAt), "d MMM yyyy", { locale: fr })}
-                          </span>
-                        </TableCell>
+                        <>
+                          <TableCell className="text-center">
+                            <span className="text-slate-500 text-sm">
+                              {format(new Date(resource.createdAt), "d MMM yyyy", { locale: fr })}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="outline" className="font-bold text-slate-500 border-slate-200">
+                              👁 {resource.viewsCount || 0}
+                            </Badge>
+                          </TableCell>
+                        </>
                       )}
 
                       {isStudent && (
@@ -243,8 +256,14 @@ export function SubjectResourceManager({
                           <Button 
                             variant="default" 
                             size="sm"
-                            className="h-8 rounded-lg bg-blue-600 hover:bg-blue-700"
-                            onClick={() => window.open(resource.link, '_blank')}
+                            className="h-8 rounded-lg bg-blue-600 hover:bg-blue-700 hover:text-white"
+                            onClick={async () => {
+                              if (!resource.isViewed && studentId) {
+                                await markSubjectResourceViewed(resource.id, studentId);
+                                fetchResources();
+                              }
+                              window.open(resource.link, '_blank');
+                            }}
                           >
                             <ExternalLink className="w-3 h-3 mr-2" /> Consulter
                           </Button>

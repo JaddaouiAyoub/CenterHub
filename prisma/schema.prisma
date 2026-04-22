@@ -67,6 +67,7 @@ model StudentProfile {
   attendance    Attendance[]
   subjects      Subject[]
   grades        Grade[]
+  subjectResourceViews SubjectResourceView[]
 }
 
 
@@ -160,6 +161,7 @@ model SubjectResource {
   subjectId String
   subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   classes   Class[]
+  views     SubjectResourceView[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -257,4 +259,15 @@ model Grade {
   updatedAt    DateTime       @updatedAt
 
   @@unique([studentId, evaluationId])
+}
+
+model SubjectResourceView {
+  id                String          @id @default(cuid())
+  studentId         String
+  student           StudentProfile  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subjectResourceId String
+  subjectResource   SubjectResource @relation(fields: [subjectResourceId], references: [id], onDelete: Cascade)
+  viewedAt          DateTime        @default(now())
+
+  @@unique([studentId, subjectResourceId])
 }

@@ -42,7 +42,16 @@ export async function getSubjectResources(params: {
           },
           classes: {
             select: { id: true, name: true }
-          }
+          },
+          _count: {
+            select: { views: true }
+          },
+          ...(studentId ? {
+            views: {
+              where: { student: { userId: studentId } },
+              select: { id: true }
+            }
+          } : {})
         },
         orderBy: { createdAt: "desc" },
         skip,
@@ -51,8 +60,17 @@ export async function getSubjectResources(params: {
       prisma.subjectResource.count({ where })
     ]);
 
+    const mappedResources = resources.map((res: any) => {
+      const { views, _count, ...rest } = res;
+      return {
+        ...rest,
+        viewsCount: _count?.views || 0,
+        isViewed: studentId ? (views && views.length > 0) : undefined
+      };
+    });
+
     return {
-      resources,
+      resources: mappedResources,
       total,
       totalPages: Math.ceil(total / pageSize)
     };
@@ -135,5 +153,73 @@ export async function deleteSubjectResource(id: string) {
   } catch (error) {
     console.error(error);
     return { error: "Erreur lors de la suppression" };
+  }
+}
+
+export async function markSubjectResourceViewed(subjectResourceId: string, userId: string) {
+  if (!userId || !subjectResourceId) return { error: "Paramètres manquants" };
+  
+  try {
+    const profile = await prisma.studentProfile.findUnique({
+      where: { userId }
+    });
+    
+    if (!profile) return { error: "Profil d'étudiant introuvable" };
+    
+    await prisma.subjectResourceView.upsert({
+      where: {
+        studentId_subjectResourceId: {
+          studentId: profile.id,
+          subjectResourceId
+        }
+      },
+      update: {
+        viewedAt: new Date()
+      },
+      create: {
+        studentId: profile.id,
+        subjectResourceId
+      }
+    });
+
+    revalidatePath("/dashboard/resources");
+    return { success: true };
+  } catch (error) {
+    console.error(error);
+    return { error: "Erreur lors du marquage de la vue" };
+  }
+}
+
+export async function getUnreadSubjectResourcesCount(userId: string) {
+  if (!userId) return 0;
+  
+  try {
+    const profile = await prisma.studentProfile.findUnique({
+      where: { userId }
+    });
+    
+    if (!profile) return 0;
+    
+    // Count total resources assigned to classes the student is in
+    const totalResources = await prisma.subjectResource.count({
+      where: {
+        classes: { some: { students: { some: { id: profile.id } } } }
+      }
+    });
+    
+    // Count how many view records exist for this student for subject resources
+    const viewedResources = await prisma.subjectResourceView.count({
+      where: {
+        studentId: profile.id,
+        subjectResource: {
+          classes: { some: { students: { some: { id: profile.id } } } }
+        }
+      }
+    });
+    
+    return Math.max(0, totalResources - viewedResources);
+  } catch (error) {
+    console.error(error);
+    return 0;
   }
 }
