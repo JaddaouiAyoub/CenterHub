@@ -4,7 +4,6 @@ import { useTranslations } from "next-intl";
 import { 
   BarChart, 
   Users, 
-  UserCircle, 
   BookOpen, 
   Settings, 
   LogOut,

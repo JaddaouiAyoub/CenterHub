@@ -57,7 +57,7 @@ export function StudentSchedule({ profile }: { profile: any }) {
     const fetchSchedule = async () => {
       setLoading(true);
       try {
-        const res = await getStudentSchedule(profile.userId, startOfWeek);
+        const res = await getStudentSchedule(profile?.user?.id, startOfWeek);
         if (res.courses) {
           setCourses(res.courses);
         } else {
@@ -70,8 +70,8 @@ export function StudentSchedule({ profile }: { profile: any }) {
         setLoading(false);
       }
     };
-    if (profile?.userId) fetchSchedule();
-  }, [profile?.userId, currentDate]);
+    if (profile?.user?.id) fetchSchedule();
+  }, [profile?.user?.id, currentDate]);
 
   // Group student courses by day
   const scheduleByDay: Record<number, any[]> = {};
