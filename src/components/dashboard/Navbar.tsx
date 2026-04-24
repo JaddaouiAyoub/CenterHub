@@ -16,7 +16,8 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useParams, useRouter, usePathname } from "next/navigation";
 import { 
   Sheet, 
@@ -47,13 +48,11 @@ export function Navbar({ user }: { user: User }) {
         {/* Mobile Menu Trigger */}
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger 
-            render={
-              <Button variant="ghost" size="icon" className="lg:hidden text-slate-600">
-                <Menu className="w-6 h-6" />
-                <span className="sr-only">Toggle Menu</span>
-              </Button>
-            }
-          />
+            className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "lg:hidden text-slate-600")}
+          >
+            <Menu className="w-6 h-6" />
+            <span className="sr-only">Toggle Menu</span>
+          </SheetTrigger>
           <SheetContent side="left" className="p-0 w-64 sm:w-72 bg-slate-900 border-r-0" showCloseButton={false}>
             <SidebarContent role={user.role as string} onNavigate={() => setIsOpen(false)} />
           </SheetContent>
