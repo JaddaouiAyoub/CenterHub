@@ -57,15 +57,6 @@ export function Navbar({ user }: { user: User }) {
             <SidebarContent role={user.role as string} onNavigate={() => setIsOpen(false)} />
           </SheetContent>
         </Sheet>
-
-        <div className="relative w-full max-w-[200px] sm:max-w-xs md:max-w-md lg:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="Rechercher..." 
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-inter"
-          />
-        </div>
       </div>
 
       <div className="flex items-center space-x-4 rtl:space-x-reverse">
