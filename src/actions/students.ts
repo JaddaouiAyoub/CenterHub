@@ -5,13 +5,21 @@ import { Role } from "@/types/prisma";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 
-export async function getStudents(search = "", page = 1, pageSize = 10) {
+export async function getStudents(search = "", page = 1, pageSize = 10, classId?: string) {
   try {
     const skip = (page - 1) * pageSize;
     const whereClause: any = { role: Role.STUDENT };
     
     if (search) {
       whereClause.name = { contains: search, mode: "insensitive" };
+    }
+
+    if (classId && classId !== "all") {
+      whereClause.studentProfile = {
+        classes: {
+          some: { id: classId }
+        }
+      };
     }
 
     const [students, total] = await Promise.all([

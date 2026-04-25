@@ -40,6 +40,7 @@ export function StudentsList() {
 
   // Pagination & Search
   const [search, setSearch] = useState("");
+  const [filterClassId, setFilterClassId] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
@@ -61,7 +62,7 @@ export function StudentsList() {
 
   const fetchData = async () => {
     try {
-      const sRes = await getStudents(search, page, pageSize);
+      const sRes = await getStudents(search, page, pageSize, filterClassId);
       if (sRes.students) {
         setStudents(sRes.students);
         setTotalItems(sRes.total || 0);
@@ -80,7 +81,7 @@ export function StudentsList() {
       fetchData();
     }, 300);
     return () => clearTimeout(timer);
-  }, [search, page, pageSize]);
+  }, [search, filterClassId, page, pageSize]);
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -132,13 +133,29 @@ export function StudentsList() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-xl font-bold text-slate-900">Gestion des Étudiants</h2>
-        <div className="flex items-center space-x-2 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
           <Input 
             placeholder="Rechercher un étudiant..." 
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-full sm:w-64 border-slate-200"
+            className="w-full sm:w-48 lg:w-64 border-slate-200"
           />
+          <Select 
+            value={filterClassId} 
+            onValueChange={(val) => { setFilterClassId(val || "all"); setPage(1); }}
+          >
+            <SelectTrigger className="w-full sm:w-40 border-slate-200">
+              <SelectValue placeholder="Toutes les classes">
+                {filterClassId === "all" ? "Toutes les classes" : classes.find(c => c.id === filterClassId)?.name || "Toutes les classes"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes les classes</SelectItem>
+              {classes.map(c => (
+                <SelectItem key={c.id} value={c.id?.toString()}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <CsvExportButton
             data={students}
             filename="etudiants"
