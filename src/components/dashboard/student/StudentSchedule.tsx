@@ -116,10 +116,10 @@ export function StudentSchedule({ profile }: { profile: any }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {DAYS.map((dayName, index) => {
-          const dayIndex = index;
+          const dbDayIndex = (index + 1) % 7;
           const dayDate = getDayDate(index);
           const isToday = dayDate.toDateString() === new Date().toDateString();
-          const dayCourses = scheduleByDay[dayIndex] || [];
+          const dayCourses = scheduleByDay[dbDayIndex] || [];
           
           return (
             <Card key={dayName} className={`
