@@ -41,6 +41,8 @@ export function PaymentManager() {
   const [selectedStudentId, setSelectedStudentId] = useState<string>("");
   const [studentCourses, setStudentCourses] = useState<any[]>([]);
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
+  const [studentSearch, setStudentSearch] = useState("");
+  const [visibleCount, setVisibleCount] = useState(10);
 
   // Pagination & Search
   const [search, setSearch] = useState("");
@@ -153,6 +155,8 @@ export function PaymentManager() {
             if(open) {
               setSelectedStudentId("");
               setSelectedCourses([]);
+              setStudentSearch("");
+              setVisibleCount(10);
             }
           }}>
             <DialogTrigger className={cn(buttonVariants({ variant: "default" }), "bg-amber-600 hover:bg-amber-700 shadow-sm shadow-amber-200 whitespace-nowrap")}>
@@ -167,21 +171,53 @@ export function PaymentManager() {
               <DialogTitle className="text-white text-xl">Nouveau Paiement</DialogTitle>
               <p className="text-amber-100 text-sm mt-1">Enregistrez une transaction pour un étudiant.</p>
             </div>
-            <form onSubmit={handleCreatePayment} className="p-6 space-y-4 bg-white">
+            <form key={isPaymentOpen ? "open" : "closed"} onSubmit={handleCreatePayment} className="p-6 space-y-4 bg-white">
               <div className="space-y-2">
                 <Label className="text-slate-600">Étudiant</Label>
-                    <Select name="studentId" required onValueChange={(val: string | null) => setSelectedStudentId(val || "")} value={selectedStudentId || undefined}>
-                      <SelectTrigger className="border-slate-200">
+                    <Select name="studentId" required onValueChange={(val: string) => setSelectedStudentId(val)}>
+                      <SelectTrigger className="border-slate-200 w-full">
                         <SelectValue placeholder="Choisir l'étudiant">
-                          {selectedStudentId && students.length > 0 ? (
-                            students.find(s => s.studentProfile?.id === selectedStudentId)?.name || "Choisir l'étudiant"
-                          ) : "Choisir l'étudiant"}
+                          {selectedStudentId ? students.find(s => s.studentProfile?.id === selectedStudentId)?.name : "Choisir l'étudiant"}
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent>
-                        {students.map(s => (
-                          <SelectItem key={s.studentProfile?.id} value={s.studentProfile?.id?.toString()}>{s.name}</SelectItem>
-                        ))}
+                      <SelectContent className="max-h-[350px] w-[calc(100vw-2rem)] sm:w-[350px]">
+                        <div className="px-2 py-2 sticky top-0 bg-white z-10 border-b border-slate-100">
+                          <Input 
+                            placeholder="Rechercher par nom..." 
+                            value={studentSearch}
+                            onChange={(e) => { setStudentSearch(e.target.value); setVisibleCount(10); }}
+                            onKeyDown={(e) => e.stopPropagation()}
+                            onClick={(e) => e.stopPropagation()}
+                            className="h-9 text-sm"
+                          />
+                        </div>
+                        {students
+                          .filter(s => s.name?.toLowerCase().includes(studentSearch.toLowerCase()))
+                          .slice(0, visibleCount)
+                          .map(s => (
+                            <SelectItem key={s.studentProfile?.id} value={s.studentProfile?.id?.toString()}>{s.name}</SelectItem>
+                          ))}
+                        
+                        {visibleCount < students.filter(s => s.name?.toLowerCase().includes(studentSearch.toLowerCase())).length && (
+                          <div className="p-2 border-t border-slate-50 mt-1">
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              className="w-full h-8 text-xs text-blue-600 bg-blue-50/50 hover:bg-blue-100" 
+                              onClick={(e) => { 
+                                e.preventDefault(); 
+                                e.stopPropagation(); 
+                                setVisibleCount(v => v + 10); 
+                              }}
+                            >
+                              Afficher plus ({students.filter(s => s.name?.toLowerCase().includes(studentSearch.toLowerCase())).length - visibleCount} restants)
+                            </Button>
+                          </div>
+                        )}
+
+                        {students.filter(s => s.name?.toLowerCase().includes(studentSearch.toLowerCase())).length === 0 && (
+                          <div className="p-3 text-sm text-slate-500 text-center italic">Aucun étudiant trouvé</div>
+                        )}
                       </SelectContent>
                     </Select>
               </div>
@@ -269,17 +305,48 @@ export function PaymentManager() {
             <div className="space-y-2">
               <Label className="text-slate-600">Étudiant</Label>
               <Select key={`student-${editingPayment?.id}`} name="studentId" defaultValue={editingPayment?.studentId?.toString()} disabled>
-                <SelectTrigger className="border-slate-200 bg-slate-50">
+                <SelectTrigger className="border-slate-200 bg-slate-50 w-full">
                   <SelectValue placeholder="Choisir l'étudiant">
                     {editingPayment?.studentId && students.length > 0 ? (
                       students.find(s => s.studentProfile?.id === editingPayment.studentId)?.name || editingPayment.student.user.name
                     ) : "Chargement..."}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent>
-                  {students.map(s => (
-                    <SelectItem key={s.studentProfile?.id} value={s.studentProfile?.id?.toString()} label={s.name || s.user?.name}>{s.name || s.user?.name}</SelectItem>
-                  ))}
+                <SelectContent className="max-h-[350px] w-[calc(100vw-2rem)] sm:w-[350px]">
+                  <div className="px-2 py-2 sticky top-0 bg-white z-10 border-b border-slate-100">
+                    <Input 
+                      placeholder="Rechercher par nom..." 
+                      value={studentSearch}
+                      onChange={(e) => { setStudentSearch(e.target.value); setVisibleCount(10); }}
+                      onKeyDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                  {students
+                    .filter(s => (s.name || s.user?.name)?.toLowerCase().includes(studentSearch.toLowerCase()))
+                    .slice(0, visibleCount)
+                    .map(s => (
+                      <SelectItem key={s.studentProfile?.id} value={s.studentProfile?.id?.toString()} label={s.name || s.user?.name}>{s.name || s.user?.name}</SelectItem>
+                    ))}
+                  
+                  {visibleCount < students.filter(s => (s.name || s.user?.name)?.toLowerCase().includes(studentSearch.toLowerCase())).length && (
+                    <div className="p-2 border-t border-slate-50 mt-1">
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        className="w-full h-8 text-xs text-blue-600 bg-blue-50/50 hover:bg-blue-100" 
+                        onClick={(e) => { 
+                          e.preventDefault(); 
+                          e.stopPropagation(); 
+                          setVisibleCount(v => v + 10); 
+                        }}
+                      >
+                        Afficher plus ({students.filter(s => (s.name || s.user?.name)?.toLowerCase().includes(studentSearch.toLowerCase())).length - visibleCount} restants)
+                      </Button>
+                    </div>
+                  )}
+
                 </SelectContent>
               </Select>
             </div>
