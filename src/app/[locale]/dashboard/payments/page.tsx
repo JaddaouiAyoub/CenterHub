@@ -15,14 +15,7 @@ export default async function PaymentsPage() {
 
   if (role === "STUDENT") {
     const profile = await getStudentProfileByUserId(session.user.id!);
-    if (!profile) {
-      return (
-        <div className="p-8 text-center bg-red-50 rounded-xl border border-red-100">
-          <h2 className="text-red-800 font-bold text-lg">Profil non trouvé</h2>
-          <p className="text-red-600">Impossible de charger votre profil.</p>
-        </div>
-      );
-    }
+    if (!profile) redirect("/login");
     return (
       <div className="p-6">
         <StudentPaymentHistory profile={profile} />

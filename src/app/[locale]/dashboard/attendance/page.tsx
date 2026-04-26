@@ -19,11 +19,12 @@ export default async function AttendancePage() {
   if (role === "TEACHER") {
     const profile = await getTeacherProfileByUserId(session.user.id!);
     teacherProfileId = profile?.id || null;
+    if (!teacherProfileId) redirect("/login");
   }
 
   if (role === "STUDENT") {
     const profile = await getStudentProfileByUserId(session.user.id!);
-    if (!profile) return <div className="p-6">Profil non trouvé</div>;
+    if (!profile) redirect("/login");
     return (
       <div className="p-6">
         <StudentAttendanceHistory profile={profile} />
@@ -34,13 +35,7 @@ export default async function AttendancePage() {
   return (
     <div className="p-6">
       {role === "TEACHER" ? (
-        teacherProfileId ? (
-          <TeacherAttendance teacherProfileId={teacherProfileId} />
-        ) : (
-          <div className="p-8 bg-red-50 text-red-600 rounded-xl border border-red-100 font-medium">
-            Profil enseignant non trouvé.
-          </div>
-        )
+        <TeacherAttendance teacherProfileId={teacherProfileId!} />
       ) : (
         <AttendanceManager />
       )}

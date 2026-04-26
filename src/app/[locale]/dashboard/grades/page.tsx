@@ -16,13 +16,13 @@ export default async function GradesPage() {
 
   if (role === "TEACHER") {
     const profile = await getTeacherProfileByUserId(session.user.id!);
-    if (!profile) return <div>Profil enseignant non trouvé</div>;
+    if (!profile) redirect("/login");
     return <TeacherGrades teacherProfileId={profile.id} />;
   }
 
   if (role === "STUDENT") {
     const profile = await getStudentProfileByUserId(session.user.id!);
-    if (!profile) return <div>Profil étudiant non trouvé</div>;
+    if (!profile) redirect("/login");
     return <StudentGrades studentProfileId={profile.id} />;
   }
 

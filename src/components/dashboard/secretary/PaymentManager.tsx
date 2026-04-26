@@ -174,7 +174,7 @@ export function PaymentManager() {
             <form key={isPaymentOpen ? "open" : "closed"} onSubmit={handleCreatePayment} className="p-6 space-y-4 bg-white">
               <div className="space-y-2">
                 <Label className="text-slate-600">Étudiant</Label>
-                    <Select name="studentId" required onValueChange={(val: string) => setSelectedStudentId(val)}>
+                    <Select name="studentId" required onValueChange={(val: string | null) => setSelectedStudentId(val || "")}>
                       <SelectTrigger className="border-slate-200 w-full">
                         <SelectValue placeholder="Choisir l'étudiant">
                           {selectedStudentId ? students.find(s => s.studentProfile?.id === selectedStudentId)?.name : "Choisir l'étudiant"}
