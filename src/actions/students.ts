@@ -159,7 +159,7 @@ export async function deleteStudent(id: string) {
   }
 }
 
-export async function getTeacherStudents(teacherProfileId: string, search = "", page = 1, pageSize = 10) {
+export async function getTeacherStudents(teacherProfileId: string, search = "", page = 1, pageSize = 10, classId?: string) {
   try {
     const skip = (page - 1) * pageSize;
 
@@ -169,9 +169,9 @@ export async function getTeacherStudents(teacherProfileId: string, search = "", 
       select: { classId: true }
     });
 
-    const classIds = Array.from(new Set(teacherCourses.map((c: { classId: any; }) => c.classId).filter(Boolean)));
+    const teacherClassIds = Array.from(new Set(teacherCourses.map((c: { classId: any; }) => c.classId).filter(Boolean))) as string[];
 
-    if (classIds.length === 0) {
+    if (teacherClassIds.length === 0) {
       return { students: [], total: 0, totalPages: 0 };
     }
 
@@ -181,7 +181,7 @@ export async function getTeacherStudents(teacherProfileId: string, search = "", 
       studentProfile: {
         classes: {
           some: {
-            id: { in: classIds }
+            id: classId && classId !== "all" ? classId : { in: teacherClassIds }
           }
         }
       }
@@ -239,6 +239,30 @@ export async function getAllStudentsForSelect() {
     return { students };
   } catch (error) {
     return { error: "Failed to fetch students for select" };
+  }
+}
+
+export async function getTeacherClasses(teacherProfileId: string) {
+  try {
+    const courses = await prisma.course.findMany({
+      where: { teacherId: teacherProfileId },
+      select: {
+        class: {
+          select: { id: true, name: true }
+        }
+      }
+    });
+
+    const classesMap = new Map();
+    courses.forEach(c => {
+      if (c.class) {
+        classesMap.set(c.class.id, c.class);
+      }
+    });
+
+    return Array.from(classesMap.values());
+  } catch (error) {
+    return [];
   }
 }
 

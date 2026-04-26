@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getTeacherStudents } from "@/actions/students";
+import { getTeacherStudents, getTeacherClasses } from "@/actions/students";
 import { 
   Table, 
   TableBody, 
@@ -16,20 +16,37 @@ import { PaginationControls } from "@/components/ui/pagination-controls";
 import { CsvExportButton } from "@/components/ui/csv-export-button";
 import { Search, GraduationCap, Users } from "lucide-react";
 import { toast } from "sonner";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 
 export function TeacherStudentsList({ teacherProfileId }: { teacherProfileId: string }) {
   const [students, setStudents] = useState<any[]>([]);
+  const [classes, setClasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [filterClassId, setFilterClassId] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
+  useEffect(() => {
+    const fetchClasses = async () => {
+      const data = await getTeacherClasses(teacherProfileId);
+      setClasses(data);
+    };
+    if (teacherProfileId) fetchClasses();
+  }, [teacherProfileId]);
+
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await getTeacherStudents(teacherProfileId, search, page, pageSize);
+      const res = await getTeacherStudents(teacherProfileId, search, page, pageSize, filterClassId);
       if (res.students) {
         setStudents(res.students);
         setTotalItems(res.total || 0);
@@ -49,7 +66,7 @@ export function TeacherStudentsList({ teacherProfileId }: { teacherProfileId: st
       fetchData();
     }, 300);
     return () => clearTimeout(timer);
-  }, [search, page, pageSize, teacherProfileId]);
+  }, [search, filterClassId, page, pageSize, teacherProfileId]);
 
   return (
     <div className="space-y-6">
@@ -63,16 +80,32 @@ export function TeacherStudentsList({ teacherProfileId }: { teacherProfileId: st
             <p className="text-sm text-slate-500">Liste des élèves inscrits dans vos classes.</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="relative flex-1 sm:flex-none sm:w-64">
+        <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input 
               placeholder="Rechercher par nom..." 
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="pl-9 border-slate-200 focus:ring-indigo-500"
+              className="pl-9 border-slate-200 focus:ring-indigo-500 w-full"
             />
           </div>
+          <Select 
+            value={filterClassId} 
+            onValueChange={(val) => { setFilterClassId(val || "all"); setPage(1); }}
+          >
+            <SelectTrigger className="w-full sm:w-40 border-slate-200">
+              <SelectValue placeholder="Toutes les classes">
+                {filterClassId === "all" ? "Toutes les classes" : classes.find(c => c.id === filterClassId)?.name || "Toutes les classes"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes les classes</SelectItem>
+              {classes.map(c => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <CsvExportButton
             data={students}
             filename="mes_etudiants"
