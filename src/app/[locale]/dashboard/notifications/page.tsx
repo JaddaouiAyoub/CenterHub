@@ -18,13 +18,7 @@ export default async function NotificationsPage() {
   // ── Student ──────────────────────────────────────────────────────────────
   if (role === "STUDENT") {
     const profile = await getStudentProfileByUserId(userId!);
-    if (!profile) {
-      return (
-        <div className="p-8 text-center bg-red-50 rounded-xl">
-          <p className="text-red-600 font-medium">Profil non trouvé.</p>
-        </div>
-      );
-    }
+    if (!profile) redirect("/login");
     return (
       <div className="p-6">
         <StudentNotifications userId={userId!} studentProfileId={profile.id} />
@@ -35,6 +29,8 @@ export default async function NotificationsPage() {
   // ── Teacher ───────────────────────────────────────────────────────────────
   if (role === "TEACHER") {
     const profile = await getTeacherProfileByUserId(userId!);
+    if (!profile) redirect("/login");
+    
     // Get their assigned class IDs for targeting
     const assignedClassIds: string[] = profile
       ? (profile as any).courses?.map((c: any) => c.classId).filter(Boolean) ?? []
