@@ -254,7 +254,7 @@ export async function getTeacherClasses(teacherProfileId: string) {
     });
 
     const classesMap = new Map();
-    courses.forEach(c => {
+    courses.forEach((c: { class: { id: any; }; }) => {
       if (c.class) {
         classesMap.set(c.class.id, c.class);
       }
