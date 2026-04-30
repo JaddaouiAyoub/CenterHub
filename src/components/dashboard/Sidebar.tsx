@@ -41,8 +41,16 @@ export function SidebarContent({ role: sessionRole, onNavigate }: { role: string
 
     if (role === "ADMIN") {
       links.push(
-        { href: `${base}/users`, label: "Utilisateurs", icon: Users },
-        { href: `${base}/settings`, label: "Paramètres", icon: Settings }
+
+        { href: `${base}/teachers`, label: "Enseignants", icon: Users },
+        { href: `${base}/students`, label: "Étudiants", icon: GraduationCap },
+        { href: `${base}/subjects`, label: "Matières", icon: Library },
+        { href: `${base}/classes`, label: "Classes", icon: School },
+        { href: `${base}/resources`, label: "Ressources", icon: FolderOpen },
+        { href: `${base}/courses`, label: "Cours", icon: Calendar },
+        { href: `${base}/attendance`, label: "Absences", icon: BookOpenCheck },
+        { href: `${base}/payments`, label: "Facturation", icon: CreditCard },
+        { href: `${base}/notifications`, label: "Notifications", icon: Bell }
       );
     } else if (role === "TEACHER") {
       links.push(
@@ -76,7 +84,6 @@ export function SidebarContent({ role: sessionRole, onNavigate }: { role: string
         { href: `${base}/resources`, label: "Ressources", icon: FolderOpen },
         { href: `${base}/courses`, label: "Cours", icon: Calendar },
         { href: `${base}/attendance`, label: "Absences", icon: BookOpenCheck },
-        { href: `${base}/payments`, label: "Facturation", icon: CreditCard },
         { href: `${base}/notifications`, label: "Notifications", icon: Bell }
       );
     }

@@ -48,11 +48,11 @@ export default async function NotificationsPage() {
     );
   }
 
-  // ── Secretary ─────────────────────────────────────────────────────────────
-  if (role === "SECRETARY") {
+  // ── Secretary / Admin ─────────────────────────────────────────────────────────────
+  if (role === "SECRETARY" || role === "ADMIN") {
     return (
       <div className="p-6">
-        <NotificationsManager userId={userId!} role="SECRETARY" />
+        <NotificationsManager userId={userId!} role={role as any} />
       </div>
     );
   }

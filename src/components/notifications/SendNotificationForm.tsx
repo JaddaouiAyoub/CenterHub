@@ -14,7 +14,7 @@ import { toast } from "sonner";
 
 interface Props {
   senderId: string;
-  senderRole: "SECRETARY" | "TEACHER";
+  senderRole: "SECRETARY" | "TEACHER" | "ADMIN";
   /** For teacher: only their assigned classes */
   availableClassIds?: string[];
   onSuccess?: () => void;

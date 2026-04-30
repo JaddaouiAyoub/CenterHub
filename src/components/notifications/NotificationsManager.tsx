@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 
 interface Props {
   userId: string;
-  role: "SECRETARY" | "TEACHER";
+  role: "SECRETARY" | "TEACHER" | "ADMIN";
   studentProfileId?: string;
   /** Teacher: their assigned class IDs for targeting */
   assignedClassIds?: string[];
