@@ -80,7 +80,7 @@ export async function getMyNotifications(
         where: { id: studentProfileId },
         select: { classes: { select: { id: true } } },
       });
-      const classIds = studentProfile?.classes.map((c) => c.id) || [];
+      const classIds = studentProfile?.classes.map((c: { id: any; }) => c.id) || [];
 
       whereClause = {
         OR: [
@@ -125,7 +125,7 @@ export async function getMyNotifications(
     ]);
 
     // Map read status
-    const notificationsWithRead = notifications.map((n) => ({
+    const notificationsWithRead = notifications.map((n:any) => ({
       ...n,
       isRead: n.reads.length > 0,
     }));
@@ -187,11 +187,11 @@ export async function markAllAsRead(userId: string, role: string, studentProfile
     const res = await getMyNotifications(userId, role, studentProfileId, 1, 1000);
     if ("error" in res) return { error: res.error };
 
-    const ids = res.notifications.filter((n) => !n.isRead).map((n) => n.id);
+    const ids = res.notifications.filter((n: { isRead: any; }) => !n.isRead).map((n: { id: any; }) => n.id);
     if (ids.length === 0) return { success: true };
 
     await prisma.notificationRead.createMany({
-      data: ids.map((notificationId) => ({ notificationId, userId })),
+      data: ids.map((notificationId: any) => ({ notificationId, userId })),
       skipDuplicates: true,
     });
 
@@ -212,7 +212,7 @@ export async function getUnreadCount(userId: string, role: string, studentProfil
         where: { id: studentProfileId },
         select: { classes: { select: { id: true } } },
       });
-      const classIds = studentProfile?.classes.map((c) => c.id) || [];
+      const classIds = studentProfile?.classes.map((c: { id: any; }) => c.id) || [];
       whereClause = {
         OR: [
           { targetType: "ALL_CLASSES" },

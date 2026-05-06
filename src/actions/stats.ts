@@ -66,7 +66,7 @@ export async function getDashboardStats() {
     ]);
 
     // Format monthly history for the chart
-    const chartData = monthlyHistory.map(item => ({
+    const chartData = monthlyHistory.map((item: { month: any; year: any; _sum: { amount: any; }; }) => ({
       name: `${item.month}/${item.year}`,
       total: item._sum.amount || 0,
       month: item.month,
