@@ -5,7 +5,21 @@ import { Role } from "@/types/prisma";
 
 export async function getDashboardStats() {
   try {
-    const [studentCount, teacherCount, courseCount, subjectCount, classCount, recentPayments] = await Promise.all([
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    const [
+      studentCount, 
+      teacherCount, 
+      courseCount, 
+      subjectCount, 
+      classCount, 
+      recentPayments,
+      totalRevenueData,
+      currentMonthRevenueData,
+      monthlyHistory
+    ] = await Promise.all([
       prisma.user.count({ where: { role: Role.STUDENT } }),
       prisma.user.count({ where: { role: Role.TEACHER } }),
       prisma.course.count(),
@@ -26,13 +40,38 @@ export async function getDashboardStats() {
             }
           }
         }
+      }),
+      prisma.payment.aggregate({
+        _sum: { amount: true },
+        where: { status: "PAID" }
+      }),
+      prisma.payment.aggregate({
+        _sum: { amount: true },
+        where: { 
+          status: "PAID",
+          month: currentMonth,
+          year: currentYear
+        }
+      }),
+      prisma.payment.groupBy({
+        by: ['year', 'month'],
+        _sum: { amount: true },
+        where: { status: "PAID" },
+        orderBy: [
+          { year: 'desc' },
+          { month: 'desc' }
+        ],
+        take: 6
       })
     ]);
 
-    const totalRevenue = await prisma.payment.aggregate({
-      _sum: { amount: true },
-      where: { status: "PAID" }
-    });
+    // Format monthly history for the chart
+    const chartData = monthlyHistory.map(item => ({
+      name: `${item.month}/${item.year}`,
+      total: item._sum.amount || 0,
+      month: item.month,
+      year: item.year
+    })).reverse();
 
     return {
       stats: {
@@ -41,7 +80,9 @@ export async function getDashboardStats() {
         courseCount,
         subjectCount,
         classCount,
-        totalRevenue: totalRevenue._sum.amount || 0
+        totalRevenue: totalRevenueData._sum.amount || 0,
+        currentMonthRevenue: currentMonthRevenueData._sum.amount || 0,
+        chartData
       },
       recentPayments
     };

@@ -21,6 +21,7 @@ import { motion } from "framer-motion";
 import { getDashboardStats } from "@/actions/stats";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PaymentChart } from "./PaymentChart";
 
 const container = {
   hidden: { opacity: 0 },
@@ -68,8 +69,8 @@ export function AdminView({ user }: { user: User }) {
   const statsCards = [
     { title: "Total Étudiants", value: statsData.studentCount?.toLocaleString() || "0", icon: Users, color: "blue", bg: "bg-blue-50", description: "Inscrits actifs" },
     { title: "Enseignants", value: statsData.teacherCount?.toLocaleString() || "0", icon: GraduationCap, color: "indigo", bg: "bg-indigo-50", description: "Corps enseignant" },
+    { title: "Ce Mois", value: `${(statsData.currentMonthRevenue || 0).toLocaleString()} DHS`, icon: TrendingUp, color: "blue", bg: "bg-blue-50", description: "Revenus du mois" },
     { title: "Paiement Total", value: `${(statsData.totalRevenue || 0).toLocaleString()} DHS`, icon: Wallet, color: "emerald", bg: "bg-emerald-50", description: "Revenus encaissés" },
-    { title: "Classes / Matières", value: `${statsData.classCount || 0} / ${statsData.subjectCount || 0}`, icon: School, color: "orange", bg: "bg-orange-50", description: "Organisation" },
   ];
 
   return (
@@ -141,6 +142,26 @@ export function AdminView({ user }: { user: User }) {
             </Card>
           </motion.div>
         ))}
+      </motion.div>
+      
+      {/* Chart Section */}
+      <motion.div variants={item} initial="hidden" animate="show">
+        <Card className="border-none shadow-sm rounded-2xl overflow-hidden bg-white">
+          <CardHeader className="p-6 pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-black text-slate-900 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-blue-500" />
+                  Flux de Trésorerie
+                </CardTitle>
+                <p className="text-xs text-slate-500 mt-0.5">Aperçu des revenus sur les 6 derniers mois.</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <PaymentChart data={statsData.chartData || []} />
+          </CardContent>
+        </Card>
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
