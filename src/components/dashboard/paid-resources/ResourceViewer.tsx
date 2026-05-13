@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { AlertCircle, Loader2, Lock, Download, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+import { PdfViewer } from "./PdfViewer";
+
 interface ResourceViewerProps {
   resourceId: string;
   mimeType: string;
@@ -24,15 +26,16 @@ export function ResourceViewer({
   const isImage = mimeType.startsWith("image/") || resourceType === "IMAGE";
   const isVideo = mimeType.startsWith("video/") || resourceType === "VIDEO";
 
-  // ── PDF ─────────────────────────────────────────────────────────────────────
+  // ── PDF (Using PDF.js for robust mobile rendering) ──────────────────────────
   if (isPdf) {
     return (
-      <SecureFrame
-        src={streamUrl}
-        title={title}
-        userName={userName}
-        type="pdf"
-      />
+      <div className="relative rounded-xl overflow-hidden select-none" style={{ height: "90vh" }}>
+        <PdfViewer 
+          url={streamUrl} 
+          onLoadError={() => console.error("PDF.js loading failed")}
+        />
+        <Watermark label={userName} />
+      </div>
     );
   }
 
