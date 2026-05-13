@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, Loader2, Lock, Download } from "lucide-react";
+import { AlertCircle, Loader2, Lock, Download, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ResourceViewerProps {
   resourceId: string;
@@ -141,9 +142,19 @@ function SecureFrame({
         </div>
       )}
       {status === "error" && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-50 dark:bg-slate-800 z-10">
-          <AlertCircle className="w-8 h-8 text-red-500" />
-          <p className="text-sm text-slate-500">Impossible de charger la ressource. Vérifiez l'URL ou vos permissions Drive.</p>
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-slate-50 dark:bg-slate-800 z-10 p-6 text-center">
+          <AlertCircle className="w-10 h-10 text-red-500" />
+          <div className="space-y-2">
+            <p className="font-medium text-slate-800 dark:text-slate-200">Aperçu bloqué ou indisponible</p>
+            <p className="text-sm text-slate-500">Certains navigateurs mobiles bloquent l'affichage des PDF intégrés.</p>
+          </div>
+          <Button 
+            onClick={() => window.open(src, "_blank")}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Ouvrir le document
+          </Button>
         </div>
       )}
       <div className="relative w-full h-full group">
@@ -156,8 +167,26 @@ function SecureFrame({
           title={title}
           className="w-full h-full border-0"
           onLoad={() => setStatus("ready")}
-          onError={() => setStatus("error")}
+          onError={() => {
+            console.error("Iframe load error");
+            setStatus("error");
+          }}
         />
+
+        {/* Mobile helper overlay - only shown if it takes too long or on mobile */}
+        {status === "loading" && (
+           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => window.open(src, "_blank")}
+                className="bg-white/80 backdrop-blur shadow-sm border-slate-200"
+              >
+                <ExternalLink className="w-3.5 h-3.5 mr-2" />
+                Ouvrir en plein écran
+              </Button>
+           </div>
+        )}
       </div>
       {status === "ready" && <Watermark label={userName} />}
     </div>

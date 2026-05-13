@@ -67,11 +67,11 @@ export async function GET(
 
         const headers = new Headers();
         headers.set("Content-Type", mimeType);
-        headers.set("Content-Disposition", "inline");
+        headers.set("Content-Disposition", 'inline; filename="resource.pdf"');
         if (size > 0) headers.set("Content-Length", String(size));
-        headers.set("X-Content-Type-Options", "nosniff");
+        // headers.set("X-Content-Type-Options", "nosniff");
         headers.set("Cache-Control", "private, no-store, no-cache");
-        headers.set("Content-Security-Policy", "frame-ancestors 'self'");
+        // headers.set("Content-Security-Policy", "frame-ancestors 'self'");
         return new NextResponse(webStream, { status: 200, headers });
       } catch (driveErr: any) {
         // If API fails (e.g. invalid_client), we proceed to Attempt 2 (Public fetch)
@@ -94,9 +94,9 @@ export async function GET(
           : (upstreamRes.headers.get("Content-Type") || "application/octet-stream");
 
         headers.set("Content-Type", finalMimeType);
-        headers.set("Content-Disposition", "inline");
-        headers.set("X-Content-Type-Options", "nosniff");
-        headers.set("Content-Security-Policy", "frame-ancestors 'self'");
+        headers.set("Content-Disposition", 'inline; filename="resource.pdf"');
+        // headers.set("X-Content-Type-Options", "nosniff");
+        // headers.set("Content-Security-Policy", "frame-ancestors 'self'");
         return new NextResponse(upstreamRes.body, { status: 200, headers });
       }
     }
@@ -110,9 +110,9 @@ export async function GET(
 
       const headers = new Headers();
       headers.set("Content-Type", resourceData.mimeType || upstreamRes.headers.get("Content-Type") || "application/octet-stream");
-      headers.set("Content-Disposition", "inline");
-      headers.set("X-Content-Type-Options", "nosniff");
-      headers.set("Content-Security-Policy", "frame-ancestors 'self'");
+      headers.set("Content-Disposition", 'inline; filename="resource.pdf"');
+      // headers.set("X-Content-Type-Options", "nosniff");
+      // headers.set("Content-Security-Policy", "frame-ancestors 'self'");
       return new NextResponse(upstreamRes.body, { status: 200, headers });
     }
 
