@@ -45,6 +45,7 @@ model User {
   notificationReads  NotificationRead[]
 }
 
+
 model TeacherProfile {
   id             String   @id @default(cuid())
   userId         String   @unique
@@ -53,6 +54,8 @@ model TeacherProfile {
   bio            String?
   courses        Course[]
   evaluations    Evaluation[]
+  // Paid Resources (back-relation — additive)
+  paidResources  PaidResource[]
 }
 
 model StudentProfile {
@@ -68,16 +71,20 @@ model StudentProfile {
   subjects      Subject[]
   grades        Grade[]
   subjectResourceViews SubjectResourceView[]
+  // Paid Resources (back-relation — additive)
+  paidResourcePurchases PaidResourcePurchase[]
 }
 
 
 model Subject {
-  id          String       @id @default(cuid())
-  name        String       @unique
-  courses     Course[]
-  students    StudentProfile[]
-  evaluations Evaluation[]
-  resources   SubjectResource[]
+  id            String         @id @default(cuid())
+  name          String         @unique
+  courses       Course[]
+  students      StudentProfile[]
+  evaluations   Evaluation[]
+  resources     SubjectResource[]
+  // Paid Resources (back-relation — additive)
+  paidResources PaidResource[]
 }
 
 model Class {
@@ -88,6 +95,8 @@ model Class {
   notifications Notification[]
   evaluations   Evaluation[]
   resources     SubjectResource[]
+  // Paid Resources (back-relation — additive)
+  paidResources PaidResource[]
 }
 
 enum Recurrence {
@@ -270,4 +279,85 @@ model SubjectResourceView {
   viewedAt          DateTime        @default(now())
 
   @@unique([studentId, subjectResourceId])
+}
+
+// ============================================================
+// PAID RESOURCES MODULE — isolated, do not mix with Payment
+// ============================================================
+
+enum PaidResourceType {
+  PDF
+  IMAGE
+  VIDEO
+}
+
+enum PaidResourceStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum PurchaseStatus {
+  PENDING
+  COMPLETED
+  REFUNDED
+}
+
+enum PaidResourceSource {
+  DRIVE  // file uploaded to Google Drive
+  URL    // external URL provided directly (no upload)
+}
+
+model PaidResource {
+  id           String             @id @default(cuid())
+  title        String
+  description  String?
+  price        Float              // price in MAD
+  type         PaidResourceType
+  mimeType     String             // original MIME type for streaming/display
+  source       PaidResourceSource @default(DRIVE)
+  driveFileId  String?            // Google Drive fileId — null when source=URL
+  externalUrl  String?            // external URL — null when source=DRIVE
+  subjectId    String?
+  subject      Subject?           @relation(fields: [subjectId], references: [id])
+  classId      String?
+  class        Class?             @relation(fields: [classId], references: [id])
+  teacherId    String?
+  teacher      TeacherProfile?    @relation(fields: [teacherId], references: [id])
+  status       PaidResourceStatus @default(DRAFT)
+  totalSales   Int                @default(0)   // denormalized counter — updated on each purchase
+  totalRevenue Float              @default(0)   // denormalized counter — updated on each purchase
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  purchases    PaidResourcePurchase[]
+
+  @@index([status])
+  @@index([subjectId])
+  @@index([classId])
+  @@index([teacherId])
+  @@index([type])
+  @@index([source])
+  @@index([createdAt])
+  @@index([totalSales])
+  @@index([price])
+}
+
+model PaidResourcePurchase {
+  id          String         @id @default(cuid())
+  resourceId  String
+  resource    PaidResource   @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     StudentProfile @relation(fields: [studentId], references: [id])
+  amountPaid  Float          // amount paid in MAD (snapshot of price at purchase time)
+  method      String         @default("CASH") // CASH | CARD | TRANSFER
+  status      PurchaseStatus @default(COMPLETED)
+  purchasedAt DateTime       @default(now())
+
+  @@unique([resourceId, studentId]) // one purchase per resource per student
+  @@index([studentId])
+  @@index([resourceId])
+  @@index([purchasedAt])
+  @@index([status])
+  @@index([method])
 }
