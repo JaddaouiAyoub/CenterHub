@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useCallback } from "react";
+import { useTransition, useCallback } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   Search, ChevronLeft, ChevronRight, MoreVertical,
@@ -13,6 +13,13 @@ import { toast } from "sonner";
 import type { PaidResourceDTO } from "@/types/paid-resources";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface PaidResourceTableProps {
   resources: PaidResourceDTO[];
@@ -41,8 +48,7 @@ const STATUS_LABELS: Record<string, string> = {
   ARCHIVED: "Archivé",
 };
 
-function DropdownMenu({ resource, onAction }: { resource: PaidResourceDTO; onAction: () => void }) {
-  const [open, setOpen] = useState(false);
+function ResourceActions({ resource, onAction }: { resource: PaidResourceDTO; onAction: () => void }) {
   const [isPending, startTransition] = useTransition();
   const params = useParams();
   const locale = params.locale as string;
@@ -53,7 +59,6 @@ function DropdownMenu({ resource, onAction }: { resource: PaidResourceDTO; onAct
       const r = await deletePaidResource(resource.id);
       if ("error" in r) toast.error(r.error);
       else { toast.success(r.success); onAction(); }
-      setOpen(false);
     });
   };
 
@@ -64,51 +69,45 @@ function DropdownMenu({ resource, onAction }: { resource: PaidResourceDTO; onAct
         : await publishPaidResource(resource.id);
       if ("error" in r) toast.error(r.error);
       else { toast.success(r.success); onAction(); }
-      setOpen(false);
     });
   };
 
   return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        disabled={isPending}
-        className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-      >
-        <MoreVertical className="w-4 h-4 text-slate-500" />
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-20 mt-1 w-44 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg py-1 text-sm">
-            <Link
-              href={`/${locale}/dashboard/paid-resources/${resource.id}/edit`}
-              className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-300"
-              onClick={() => setOpen(false)}
-            >
-              <Pencil className="w-3.5 h-3.5" /> Modifier
-            </Link>
-            <button
-              onClick={handleTogglePublish}
-              className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-300"
-            >
-              {resource.status === "PUBLISHED" ? (
-                <><Archive className="w-3.5 h-3.5" /> Dépublier</>
-              ) : (
-                <><CheckCircle className="w-3.5 h-3.5 text-green-500" /> Publier</>
-              )}
-            </button>
-            <hr className="my-1 border-slate-100 dark:border-slate-700" />
-            <button
-              onClick={handleDelete}
-              className="w-full flex items-center gap-2 px-3 py-2 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600"
-            >
-              <Trash2 className="w-3.5 h-3.5" /> Supprimer
-            </button>
-          </div>
-        </>
-      )}
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger>
+        <button
+          disabled={isPending}
+          className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+        >
+          <MoreVertical className="w-4 h-4 text-slate-500" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuItem>
+          <Link
+            href={`/${locale}/dashboard/paid-resources/${resource.id}/edit`}
+            className="flex items-center gap-2 w-full"
+          >
+            <Pencil className="w-3.5 h-3.5" /> Modifier
+          </Link>
+        </DropdownMenuItem>
+        {/* <DropdownMenuItem onClick={handleTogglePublish} className="flex items-center gap-2">
+          {resource.status === "PUBLISHED" ? (
+            <><Archive className="w-3.5 h-3.5" /> Dépublier</>
+          ) : (
+            <><CheckCircle className="w-3.5 h-3.5 text-green-500" /> Publier</>
+          )}
+        </DropdownMenuItem> */}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={handleDelete}
+          variant="destructive"
+          className="flex items-center gap-2"
+        >
+          <Trash2 className="w-3.5 h-3.5" /> Supprimer
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -189,7 +188,7 @@ export function PaidResourceTable({
       </p>
 
       {/* Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-visible">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -260,7 +259,7 @@ export function PaidResourceTable({
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-center">
-                          <DropdownMenu resource={resource} onAction={() => router.refresh()} />
+                          <ResourceActions resource={resource} onAction={() => router.refresh()} />
                         </div>
                       </td>
                     </tr>
