@@ -48,7 +48,7 @@ export function SidebarContent({ role: sessionRole, onNavigate }: { role: string
         { href: `${base}/subjects`, label: "Matières", icon: Library },
         { href: `${base}/classes`, label: "Classes", icon: School },
         { href: `${base}/resources`, label: "Ressources", icon: FolderOpen },
-        { href: `${base}/paid-resources`, label: "Ressources payantes", icon: ShoppingBag },
+        // { href: `${base}/paid-resources`, label: "Ressources payantes", icon: ShoppingBag },
         { href: `${base}/courses`, label: "Cours", icon: Calendar },
         { href: `${base}/attendance`, label: "Absences", icon: BookOpenCheck },
         { href: `${base}/payments`, label: "Facturation", icon: CreditCard },
@@ -74,7 +74,7 @@ export function SidebarContent({ role: sessionRole, onNavigate }: { role: string
         { href: `${base}/schedule`, label: "Emploi du Temps", icon: Calendar },
         { href: `${base}/attendance`, label: "Mes Absences", icon: BookOpenCheck },
         { href: `${base}/resources`, label: "Ressources", icon: FolderOpen },
-        { href: `${base}/paid-resources`, label: "Ressources payantes", icon: ShoppingBag },
+        // { href: `${base}/paid-resources`, label: "Ressources payantes", icon: ShoppingBag },
         { href: `${base}/grades`, label: "Mes Notes", icon: FileText },
         { href: `${base}/payments`, label: "Mes Paiements", icon: CreditCard },
         { href: `${base}/notifications`, label: "Notifications", icon: Bell }
