@@ -14,6 +14,7 @@ export default async function ResourcesPage() {
   const subjects = await getSubjects();
   const classes = await getClasses();
   const studentId = role === "STUDENT" ? session.user.id : undefined;
+  const teacherUserId = role === "TEACHER" ? session.user.id : undefined;
 
   return (
     <div className="p-6">
@@ -22,6 +23,7 @@ export default async function ResourcesPage() {
         subjects={subjects} 
         classes={classes} 
         studentId={studentId}
+        teacherUserId={teacherUserId}
       />
     </div>
   );

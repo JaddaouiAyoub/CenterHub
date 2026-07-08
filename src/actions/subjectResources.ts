@@ -8,10 +8,11 @@ export async function getSubjectResources(params: {
   subjectId?: string;
   classId?: string;
   studentId?: string;
+  teacherUserId?: string; // ← nouveau
   page?: number;
   pageSize?: number;
 }) {
-  const { search = "", subjectId, classId, studentId, page = 1, pageSize = 10 } = params;
+  const { search = "", subjectId, classId, studentId,    teacherUserId, page = 1, pageSize = 10 } = params;
   const skip = (page - 1) * pageSize;
 
   try {
@@ -31,6 +32,18 @@ export async function getSubjectResources(params: {
 
     if (studentId) {
       where.classes = { some: { students: { some: { userId: studentId } } } };
+    }
+
+    // ← Filtre prof : uniquement les ressources dont la matière
+    //   est enseignée par ce prof (via ses courses)
+    if (teacherUserId) {
+      where.subject = {
+        courses: {
+          some: {
+            teacher: { userId: teacherUserId }
+          }
+        }
+      };
     }
 
     const [resources, total] = await Promise.all([

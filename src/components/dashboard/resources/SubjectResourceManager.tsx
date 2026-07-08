@@ -50,12 +50,14 @@ export function SubjectResourceManager({
   role, 
   subjects,
   classes,
-  studentId
+  studentId,
+  teacherUserId
 }: { 
   role: string; 
   subjects: any[];
   classes: any[];
   studentId?: string;
+  teacherUserId?: string;
 }) {
   const [resources, setResources] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
@@ -76,6 +78,7 @@ export function SubjectResourceManager({
       search,
       subjectId: selectedSubject,
       studentId: isStudent ? studentId : undefined,
+      teacherUserId: !isStudent ? teacherUserId : undefined,
       page,
       pageSize
     });
