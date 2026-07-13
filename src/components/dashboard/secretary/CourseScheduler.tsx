@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getCourses, createCourse, updateCourse, deleteCourse, getSubjects, getClasses, createSubject, createClass } from "@/actions/courses";
 import { getTeachers } from "@/actions/teachers";
 import { PaginationControls } from "@/components/ui/pagination-controls";
@@ -14,32 +14,47 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Calendar, Trash2, Plus, Clock, BookOpen, Users, Edit, Link } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Calendar, Trash2, Clock, BookOpen, Users, Edit, Link } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import { CourseCreateForm } from "./CourseCreateForm";
+import { CourseEditForm } from "./CourseEditForm";
 
 const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
+type CourseRecord = {
+  id: string;
+  name: string;
+  classId?: string | number | null | undefined;
+  teacherId?: string | number | null | undefined;
+  subjectId?: string | number | null | undefined;
+  day?: number | null;
+  recurrence?: "WEEKLY" | "ONCE";
+  specificDate?: string | Date | null;
+  startTime?: string;
+  endTime?: string;
+  meetingLink?: string | null;
+  subject: { id: string | number; name: string };
+  class: { id: string | number; name: string };
+  teacher?: {
+    id?: string | number;
+    user?: {
+      name?: string;
+    };
+  } | null;
+};
+
 export function CourseScheduler() {
-  const [courses, setCourses] = useState<any[]>([]);
-  const [subjects, setSubjects] = useState<any[]>([]);
-  const [classes, setClasses] = useState<any[]>([]);
-  const [teachers, setTeachers] = useState<any[]>([]);
+  const [courses, setCourses] = useState<CourseRecord[]>([]);
+  const [subjects, setSubjects] = useState<Array<{ id: string | number; name: string }>>([]);
+  const [classes, setClasses] = useState<Array<{ id: string | number; name: string }>>([]);
+  const [teachers, setTeachers] = useState<Array<{ name: string; teacherProfile?: { id?: string | number } }>>([]);
   const [loading, setLoading] = useState(true);
   const [isCourseOpen, setIsCourseOpen] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<any>(null);
-  const [recurrenceType, setRecurrenceType] = useState<"WEEKLY" | "ONCE">("WEEKLY");
-  
-  // Creation Form State (for controlled Selects to avoid ID leakage)
-  const [newClassId, setNewClassId] = useState<string>("");
-  const [newTeacherId, setNewTeacherId] = useState<string>("");
-  const [newSubjectId, setNewSubjectId] = useState<string>("");
-  const [newDay, setNewDay] = useState<string>("");
+  const [editingCourse, setEditingCourse] = useState<CourseRecord | null>(null);
 
   // Pagination & Search
   const [search, setSearch] = useState("");
@@ -48,7 +63,7 @@ export function CourseScheduler() {
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [co, su, cl, te] = await Promise.all([
         getCourses(search, page, pageSize), getSubjects(), getClasses(), getTeachers()
@@ -62,19 +77,19 @@ export function CourseScheduler() {
       setSubjects(su || []);
       setClasses(cl || []);
       if (te.teachers) setTeachers(te.teachers);
-    } catch (error) {
+    } catch {
       toast.error("Erreur de chargement du calendrier");
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, pageSize, search]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchData();
     }, 300);
     return () => clearTimeout(timer);
-  }, [search, page, pageSize]);
+  }, [fetchData]);
 
   const handleCreateCourse = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -93,6 +108,9 @@ export function CourseScheduler() {
 
   const handleUpdateCourse = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // Garde : editingCourse peut être null (le formulaire ne devrait pas être
+    // soumis dans ce cas, mais TypeScript exige la vérification explicite).
+    if (!editingCourse) return;
     const formData = new FormData(e.currentTarget);
     toast.promise(updateCourse(editingCourse.id, formData), {
       loading: "Mise à jour en cours...",
@@ -179,123 +197,7 @@ export function CourseScheduler() {
                 <DialogTitle className="text-white text-xl">Nouveau Cours</DialogTitle>
                 <p className="text-purple-100 text-sm mt-1">Définissez un créneau dans le calendrier scolaire.</p>
               </div>
-              <form onSubmit={handleCreateCourse} className="p-6 space-y-4 bg-white">
-                <div className="space-y-2">
-                  <Label className="text-slate-600 font-bold">Type de Séance</Label>
-                  <Select name="recurrence" defaultValue="WEEKLY" onValueChange={(v: any) => setRecurrenceType(v)}>
-                    <SelectTrigger className="border-slate-200">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="WEEKLY">Hebdomadaire (Récurrente)</SelectItem>
-                      <SelectItem value="ONCE">Séance Unique (Date précise)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-slate-600">Nom du cours / Description</Label>
-                    <Input name="name" placeholder="Ex: Soutien Mathématiques" required className="border-slate-200 focus:ring-purple-500" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-600">Classe / Groupe</Label>
-                    <Select name="classId" value={newClassId} onValueChange={(val) => setNewClassId(val || "")}>
-                      <SelectTrigger className="border-slate-200">
-                        <SelectValue placeholder="Choisir la classe">
-                          {newClassId ? classes.find(c => c.id === newClassId)?.name : "Choisir la classe"}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {classes.map(c => (
-                          <SelectItem key={c.id} value={c.id?.toString()}>{c.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-slate-600">Enseignant</Label>
-                    <Select name="teacherId" value={newTeacherId} onValueChange={(val) => setNewTeacherId(val || "")}>
-                      <SelectTrigger className="border-slate-200">
-                        <SelectValue placeholder="Facultatif">
-                          {newTeacherId === "none" ? "Aucun enseignant" : (newTeacherId ? (teachers.find(t => t.teacherProfile?.id === newTeacherId)?.name || "Facultatif") : "Facultatif")}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Aucun enseignant</SelectItem>
-                        {teachers.map(t => (
-                          <SelectItem key={t.teacherProfile?.id} value={t.teacherProfile?.id?.toString() || ""}>{t.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-600">Matière</Label>
-                    <Select name="subjectId" value={newSubjectId} onValueChange={(val) => setNewSubjectId(val || "")}>
-                      <SelectTrigger className="border-slate-200">
-                        <SelectValue placeholder="Obligatoire">
-                          {newSubjectId ? (subjects.find(s => s.id === newSubjectId)?.name || "Obligatoire") : "Obligatoire"}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {subjects.map(s => (
-                          <SelectItem key={s.id} value={s.id?.toString()}>{s.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className={`grid ${recurrenceType === "ONCE" ? "grid-cols-1" : "grid-cols-3"} gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100`}>
-                  {recurrenceType === "WEEKLY" ? (
-                    <div className="space-y-2">
-                      <Label className="text-slate-600">Jour</Label>
-                      <Select name="day" value={newDay} onValueChange={(val) => setNewDay(val || "")}>
-                        <SelectTrigger className="border-slate-200 bg-white">
-                          <SelectValue placeholder="Jour">
-                             {newDay ? DAYS[(parseInt(newDay) + 6) % 7] : "Jour"}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {DAYS.map((d, i) => (
-                            <SelectItem key={i} value={((i + 1) % 7).toString()}>{d}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <Label className="text-slate-600">Date Précise</Label>
-                      <Input name="specificDate" type="date" required className="border-slate-200 bg-white focus:ring-purple-500" 
-                        onChange={(e) => {
-                          // Also set the 'day' field automatically based on the chosen date
-                          const date = new Date(e.target.value);
-                          const dayInput = document.getElementById('hidden-day-input') as HTMLInputElement;
-                          if (dayInput && !isNaN(date.getTime())) {
-                            dayInput.value = date.getDay().toString();
-                          }
-                        }}
-                      />
-                      <input type="hidden" id="hidden-day-input" name="day" value="0" />
-                    </div>
-                  )}
-                  <div className="space-y-2">
-                    <Label className="text-slate-600">Début</Label>
-                    <Input name="startTime" type="time" required className="border-slate-200 bg-white focus:ring-purple-500" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-600">Fin</Label>
-                    <Input name="endTime" type="time" required className="border-slate-200 bg-white focus:ring-purple-500" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-slate-600">Lien de la séance (ex: Zoom, Meet) <span className="text-slate-400 text-xs">- Facultatif</span></Label>
-                  <Input name="meetingLink" type="url" placeholder="https://..." className="border-slate-200 focus:ring-purple-500 font-mono text-sm" />
-                </div>
-                <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 h-12">Enregistrer le cours</Button>
-              </form>
+              <CourseCreateForm subjects={subjects} classes={classes} teachers={teachers} onSubmit={handleCreateCourse} />
             </DialogContent>
           </Dialog>
           </div>
@@ -312,129 +214,15 @@ export function CourseScheduler() {
             <DialogTitle className="text-white text-xl">Modifier le Cours</DialogTitle>
             <p className="text-indigo-100 text-sm mt-1">Mise à jour du créneau pour {editingCourse?.name}.</p>
           </div>
-          <form onSubmit={handleUpdateCourse} className="p-6 space-y-4 bg-white">
-            <div className="space-y-2">
-                <Label className="text-slate-600 font-bold">Type de Séance</Label>
-                <Select key={`rec-${editingCourse?.id}`} name="recurrence" defaultValue={editingCourse?.recurrence || "WEEKLY"} onValueChange={(v: any) => setRecurrenceType(v)}>
-                  <SelectTrigger className="border-slate-200">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="WEEKLY">Hebdomadaire (Récurrente)</SelectItem>
-                    <SelectItem value="ONCE">Séance Unique (Date précise)</SelectItem>
-                  </SelectContent>
-                </Select>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-slate-600">Nom du cours / Description</Label>
-                <Input name="name" defaultValue={editingCourse?.name} required className="border-slate-200 focus:ring-purple-500" />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-slate-600">Classe</Label>
-                <Select key={`class-${editingCourse?.id}`} name="classId" defaultValue={editingCourse?.classId?.toString() || ""}>
-                  <SelectTrigger className="border-slate-200">
-                    <SelectValue placeholder="Choisir la classe">
-                      {editingCourse?.classId && classes.length > 0 ? (
-                        classes.find(c => c.id === editingCourse.classId)?.name || "Choisir la classe"
-                      ) : "Choisir la classe"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {classes.map(c => (
-                      <SelectItem key={c.id} value={c.id?.toString()}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-slate-600">Enseignant</Label>
-                <Select key={`teacher-${editingCourse?.id}`} name="teacherId" defaultValue={editingCourse?.teacherId?.toString() || ""}>
-                  <SelectTrigger className="border-slate-200">
-                    <SelectValue placeholder="Choisir l'enseignant">
-                      {editingCourse?.teacherId === null || editingCourse?.teacherId === "" ? "Non assigné" : 
-                       (editingCourse?.teacherId && teachers.length > 0 ? (
-                        teachers.find(t => t.teacherProfile?.id === editingCourse.teacherId)?.name || "Non assigné"
-                      ) : "Non assigné")}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Non assigné</SelectItem>
-                    {teachers.map(t => (
-                      <SelectItem key={t.teacherProfile?.id} value={t.teacherProfile?.id?.toString() || ""}>{t.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-slate-600">Matière</Label>
-                <Select key={`subject-${editingCourse?.id}`} name="subjectId" defaultValue={editingCourse?.subjectId?.toString() || ""}>
-                  <SelectTrigger className="border-slate-200">
-                    <SelectValue placeholder="Choisir la matière">
-                      {editingCourse?.subjectId && subjects.length > 0 ? (
-                        subjects.find(s => s.id === editingCourse.subjectId)?.name || "Choisir la matière"
-                      ) : "Choisir la matière"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {subjects.map(s => (
-                      <SelectItem key={s.id} value={s.id?.toString()}>{s.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <div className={`grid ${recurrenceType === "ONCE" ? "grid-cols-1" : "grid-cols-3"} gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100`}>
-              {recurrenceType === "WEEKLY" ? (
-                <div className="space-y-2">
-                  <Label className="text-slate-600">Jour</Label>
-                  <Select key={`day-${editingCourse?.id}`} name="day" defaultValue={editingCourse?.day?.toString() || ""}>
-                    <SelectTrigger className="border-slate-200 bg-white">
-                      <SelectValue placeholder="Choisir le jour">
-                        {editingCourse?.day !== undefined ? DAYS[(editingCourse.day + 6) % 7] : "Choisir"}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DAYS.map((d, i) => (
-                        <SelectItem key={i} value={((i + 1) % 7).toString()}>{d}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <Label className="text-slate-600">Date Précise</Label>
-                  <Input key={`date-${editingCourse?.id}`} name="specificDate" type="date" defaultValue={editingCourse?.specificDate ? new Date(editingCourse.specificDate).toISOString().split('T')[0] : ""} required className="border-slate-200 bg-white focus:ring-indigo-500" 
-                    onChange={(e) => {
-                      const date = new Date(e.target.value);
-                      const dayInput = document.getElementById('hidden-day-edit-input') as HTMLInputElement;
-                      if (dayInput && !isNaN(date.getTime())) {
-                        dayInput.value = date.getDay().toString();
-                      }
-                    }}
-                  />
-                  <input type="hidden" id="hidden-day-edit-input" name="day" defaultValue={editingCourse?.day?.toString() || "0"} />
-                </div>
-              )}
-              <div className="space-y-2">
-                <Label className="text-slate-600">Début</Label>
-                <Input key={`start-${editingCourse?.id}`} name="startTime" type="time" defaultValue={editingCourse?.startTime || ""} required className="border-slate-200 bg-white focus:ring-indigo-500" />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-slate-600">Fin</Label>
-                <Input key={`end-${editingCourse?.id}`} name="endTime" type="time" defaultValue={editingCourse?.endTime || ""} required className="border-slate-200 bg-white focus:ring-indigo-500" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-slate-600">Lien de la séance (ex: Zoom, Meet) <span className="text-slate-400 text-xs">- Facultatif</span></Label>
-              <Input key={`link-${editingCourse?.id}`} name="meetingLink" type="url" defaultValue={editingCourse?.meetingLink || ""} placeholder="https://..." className="border-slate-200 focus:ring-indigo-500 font-mono text-sm" />
-            </div>
-            <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 h-12">Sauvegarder les modifications</Button>
-          </form>
+          {editingCourse ? (
+            <CourseEditForm
+              course={editingCourse}
+              subjects={subjects}
+              classes={classes}
+              teachers={teachers}
+              onSubmit={handleUpdateCourse}
+            />
+          ) : null}
         </DialogContent>
       </Dialog>
 
@@ -468,75 +256,89 @@ export function CourseScheduler() {
                 </TableCell>
               </TableRow>
             ) : (
-              courses.map((c) => (
-                <TableRow key={c.id} className="hover:bg-slate-50/50 transition-colors">
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="font-semibold text-slate-900 text-sm">{c.name}</span>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-none px-2 py-0.5 text-[10px] font-semibold">
-                          <BookOpen className="w-3 h-3 mr-1" />
-                          {c.subject.name}
-                        </Badge>
-                        {c.meetingLink && (
-                          <a href={c.meetingLink} target="_blank" rel="noopener noreferrer" className="flex items-center text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 hover:bg-emerald-100 transition-colors">
-                            <Link className="w-3 h-3 mr-1" />
-                            Lien
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col space-y-2">
-                       <div className="flex items-center space-x-2">
-                         <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500">
-                           {c.teacher?.user.name.charAt(0) || "?"}
-                         </div>
-                         <span className="text-sm text-slate-700 font-medium">{c.teacher?.user.name || "Professeur non assigné"}</span>
-                       </div>
-                       <div className="flex items-center">
-                          <Badge className="bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-200">
-                            {c.class.name}
+              courses.map((c) => {
+                // c.day peut être null/undefined en base (ex: séance ONCE mal
+                // renseignée) : on sécurise avant l'opération arithmétique.
+                const dayIndex = c.day != null ? (c.day + 6) % 7 : null;
+                // c.specificDate peut être null/undefined : Date() n'accepte pas null.
+                const specificDateLabel = c.specificDate
+                  ? new Date(c.specificDate).toLocaleDateString("fr-FR")
+                  : "Date non définie";
+                const teacherInitial = c.teacher?.user?.name?.charAt(0) || "?";
+                const teacherName = c.teacher?.user?.name || "Professeur non assigné";
+
+                return (
+                  <TableRow key={c.id} className="hover:bg-slate-50/50 transition-colors">
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-slate-900 text-sm">{c.name}</span>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-none px-2 py-0.5 text-[10px] font-semibold">
+                            <BookOpen className="w-3 h-3 mr-1" />
+                            {c.subject.name}
                           </Badge>
-                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                     <div className="flex flex-col space-y-1">
-                        <span className="font-semibold text-slate-800 text-sm">
-                          {c.recurrence === "WEEKLY" ? DAYS[(c.day + 6) % 7] : new Date(c.specificDate).toLocaleDateString("fr-FR")}
-                        </span>
-                        <div className="flex items-center space-x-2">
-                          <div className="flex items-center text-xs text-indigo-600 font-medium bg-indigo-50 px-2 py-1 rounded-md w-max">
-                            <Clock className="w-3.5 h-3.5 mr-1.5" /> {c.startTime} - {c.endTime}
-                          </div>
-                          {c.recurrence === "ONCE" && (
-                            <Badge className="bg-amber-50 text-amber-700 border-amber-100 text-[9px] h-5">UNIQUE</Badge>
+                          {c.meetingLink && (
+                            <a href={c.meetingLink} target="_blank" rel="noopener noreferrer" className="flex items-center text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 hover:bg-emerald-100 transition-colors">
+                              <Link className="w-3 h-3 mr-1" />
+                              Lien
+                            </a>
                           )}
                         </div>
-                     </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
-                      onClick={() => setEditingCourse(c)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="text-slate-400 hover:text-red-600 hover:bg-red-50"
-                      onClick={() => handleDelete(c.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col space-y-2">
+                         <div className="flex items-center space-x-2">
+                           <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500">
+                             {teacherInitial}
+                           </div>
+                           <span className="text-sm text-slate-700 font-medium">{teacherName}</span>
+                         </div>
+                         <div className="flex items-center">
+                            <Badge className="bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-200">
+                              {c.class.name}
+                            </Badge>
+                         </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                       <div className="flex flex-col space-y-1">
+                          <span className="font-semibold text-slate-800 text-sm">
+                            {c.recurrence === "WEEKLY"
+                              ? (dayIndex != null ? DAYS[dayIndex] : "Jour non défini")
+                              : specificDateLabel}
+                          </span>
+                          <div className="flex items-center space-x-2">
+                            <div className="flex items-center text-xs text-indigo-600 font-medium bg-indigo-50 px-2 py-1 rounded-md w-max">
+                              <Clock className="w-3.5 h-3.5 mr-1.5" /> {c.startTime} - {c.endTime}
+                            </div>
+                            {c.recurrence === "ONCE" && (
+                              <Badge className="bg-amber-50 text-amber-700 border-amber-100 text-[9px] h-5">UNIQUE</Badge>
+                            )}
+                          </div>
+                       </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
+                        onClick={() => setEditingCourse(c)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-slate-400 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => handleDelete(c.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
@@ -556,4 +358,3 @@ export function CourseScheduler() {
     </div>
   );
 }
-
