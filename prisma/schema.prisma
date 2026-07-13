@@ -144,7 +144,7 @@ model Resource {
 model Enrollment {
   id        String         @id @default(cuid())
   studentId String
-  student   StudentProfile @relation(fields: [studentId], references: [id])
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
   active    Boolean        @default(true)
   createdAt DateTime       @default(now())
 }
@@ -152,7 +152,7 @@ model Enrollment {
 model Attendance {
   id        String         @id @default(cuid())
   studentId String
-  student   StudentProfile @relation(fields: [studentId], references: [id])
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
   courseId  String
   course    Course         @relation(fields: [courseId], references: [id])
   date      DateTime
@@ -180,7 +180,7 @@ model SubjectResource {
 model Payment {
   id        String         @id @default(cuid())
   studentId String
-  student   StudentProfile @relation(fields: [studentId], references: [id])
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
   amount    Float
   date      DateTime       @default(now())
   month     Int
@@ -261,7 +261,7 @@ model Grade {
   value        Float
   comment      String?
   studentId    String
-  student      StudentProfile @relation(fields: [studentId], references: [id])
+  student      StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
   evaluationId String
   evaluation   Evaluation     @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
   createdAt    DateTime       @default(now())
@@ -348,7 +348,7 @@ model PaidResourcePurchase {
   resourceId  String
   resource    PaidResource   @relation(fields: [resourceId], references: [id], onDelete: Cascade)
   studentId   String
-  student     StudentProfile @relation(fields: [studentId], references: [id])
+  student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
   amountPaid  Float          // amount paid in MAD (snapshot of price at purchase time)
   method      String         @default("CASH") // CASH | CARD | TRANSFER
   status      PurchaseStatus @default(COMPLETED)
