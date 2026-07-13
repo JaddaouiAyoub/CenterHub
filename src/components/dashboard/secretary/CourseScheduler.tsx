@@ -28,21 +28,21 @@ const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dima
 type CourseRecord = {
   id: string;
   name: string;
-  classId?: string | number | null | undefined;
-  teacherId?: string | number | null | undefined;
-  subjectId?: string | number | null | undefined;
-  day?: number | null;
-  recurrence?: "WEEKLY" | "ONCE";
-  specificDate?: string | Date | null;
-  startTime?: string;
-  endTime?: string;
-  meetingLink?: string | null;
-  subject: { id: string | number; name: string };
-  class: { id: string | number; name: string };
-  teacher?: {
-    id?: string | number;
-    user?: {
-      name?: string;
+  classId: string;
+  teacherId: string | null;
+  subjectId: string;
+  day: number;
+  recurrence: "WEEKLY" | "ONCE";
+  specificDate: Date | null;
+  startTime: string;
+  endTime: string;
+  meetingLink: string | null;
+  subject: { id: string; name: string };
+  class: { id: string; name: string };
+  teacher: {
+    id: string;
+    user: {
+      name: string | null;
     };
   } | null;
 };
@@ -51,7 +51,16 @@ export function CourseScheduler() {
   const [courses, setCourses] = useState<CourseRecord[]>([]);
   const [subjects, setSubjects] = useState<Array<{ id: string | number; name: string }>>([]);
   const [classes, setClasses] = useState<Array<{ id: string | number; name: string }>>([]);
-  const [teachers, setTeachers] = useState<Array<{ name: string; teacherProfile?: { id?: string | number } }>>([]);
+  type Teacher = {
+    id: string;
+    name: string | null;
+    email?: string;
+    role?: string;
+    image?: string | null;
+    createdAt?: Date;
+    teacherProfile?: { id: string; specialization?: string | null; bio?: string | null } | null;
+  };
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCourseOpen, setIsCourseOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<CourseRecord | null>(null);

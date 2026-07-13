@@ -12,16 +12,17 @@ const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dima
 
 type SelectOption = {
   id: string | number;
-  name: string;
+  name: string | null;
   teacherProfile?: {
     id?: string | number;
-  };
+  } | null;
 };
 
 type CourseCreateFormProps = {
   subjects: SelectOption[];
   classes: SelectOption[];
-  teachers: Array<SelectOption & { name: string }>;
+  // name peut être null : User.name est String? dans le schema Prisma
+  teachers: SelectOption[];
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
 };
 
@@ -91,7 +92,7 @@ export function CourseCreateForm({ subjects, classes, teachers, onSubmit }: Cour
               <SelectItem value="">Aucun enseignant</SelectItem>
               {teachers.map((t) => (
                 <SelectItem key={t.teacherProfile?.id} value={t.teacherProfile?.id?.toString() || ""}>
-                  {t.name}
+                  {t.name || "Enseignant sans nom"}
                 </SelectItem>
               ))}
             </SelectContent>

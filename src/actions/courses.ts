@@ -51,7 +51,39 @@ export async function updateClass(id: string, name: string) {
   }
 }
 
-export async function getCourses(search = "", page = 1, pageSize = 10) {
+
+type CourseListItem = {
+  id: string;
+  name: string;
+  day: number;
+  startTime: string;
+  endTime: string;
+  meetingLink: string | null;
+  recurrence: "WEEKLY" | "ONCE";
+  specificDate: Date | null;
+  classId: string;
+  teacherId: string | null;
+  subjectId: string;
+  subject: { id: string; name: string };
+  class: { id: string; name: string };
+  teacher: {
+    id: string;
+    user: { id: string; name: string | null; image: string | null };
+  } | null;
+};
+
+type GetCoursesResult = {
+  courses?: CourseListItem[];
+  total?: number;
+  totalPages?: number;
+  error?: string;
+};
+
+export async function getCourses(
+  search = "",
+  page = 1,
+  pageSize = 10
+): Promise<GetCoursesResult> {
   try {
     const skip = (page - 1) * pageSize;
     const whereClause: any = {};
@@ -62,7 +94,7 @@ export async function getCourses(search = "", page = 1, pageSize = 10) {
         { class: { name: { contains: search, mode: "insensitive" } } }
       ];
     }
-    
+
     const [courses, total] = await Promise.all([
       prisma.course.findMany({
         where: whereClause,
@@ -76,6 +108,10 @@ export async function getCourses(search = "", page = 1, pageSize = 10) {
           endTime: true,
           meetingLink: true,
           recurrence: true,
+          specificDate: true, // ← ajouté : nécessaire pour l'affichage des séances "ONCE"
+          classId: true,      // ← ajouté : nécessaire pour pré-remplir le formulaire d'édition
+          teacherId: true,    // ← ajouté
+          subjectId: true,    // ← ajouté
           subject: { select: { id: true, name: true } },
           class: { select: { id: true, name: true } },
           teacher: {
@@ -85,18 +121,17 @@ export async function getCourses(search = "", page = 1, pageSize = 10) {
             }
           }
         },
-        orderBy: [
-          { day: "asc" },
-          { startTime: "asc" }
-        ]
+        orderBy: [{ day: "asc" }, { startTime: "asc" }]
       }),
       prisma.course.count({ where: whereClause })
     ]);
+
     return { courses, total, totalPages: Math.ceil(total / pageSize) };
   } catch (error) {
     return { error: "Failed to fetch courses" };
   }
 }
+
 
 export async function createCourse(formData: FormData) {
   const name = formData.get("name") as string;

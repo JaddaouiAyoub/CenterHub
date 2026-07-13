@@ -12,10 +12,10 @@ const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dima
 
 type SelectOption = {
   id: string | number;
-  name: string;
+  name: string | null;
   teacherProfile?: {
     id?: string | number;
-  };
+  } | null;
 };
 
 type CourseRecord = {
@@ -37,7 +37,7 @@ type CourseRecord = {
   teacher?: {
     id?: string | number;
     user?: {
-      name?: string;
+      name?: string | null;
     };
   } | null;
 };
@@ -46,7 +46,7 @@ type CourseEditFormProps = {
   course: CourseRecord;
   subjects: SelectOption[];
   classes: SelectOption[];
-  teachers: Array<SelectOption & { name: string }>;
+  teachers: SelectOption[];
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
 };
 
@@ -88,7 +88,7 @@ export function CourseEditForm({ course, subjects, classes, teachers, onSubmit }
   const teacherLabel =
     teacherId === ""
       ? "Non assigné"
-      : teachers.find((t) => t.teacherProfile?.id?.toString() === teacherId)?.name;
+      : teachers.find((t) => t.teacherProfile?.id?.toString() === teacherId)?.name || "Enseignant sans nom";
   const subjectLabel = subjects.find((s) => s.id?.toString() === subjectId)?.name;
   const dayLabel = day !== "" ? DAYS[(parseInt(day, 10) + 6) % 7] : undefined;
 
@@ -140,7 +140,7 @@ export function CourseEditForm({ course, subjects, classes, teachers, onSubmit }
               <SelectItem value="">Non assigné</SelectItem>
               {teachers.map((t) => (
                 <SelectItem key={t.teacherProfile?.id} value={t.teacherProfile?.id?.toString() || ""}>
-                  {t.name}
+                  {t.name || "Enseignant sans nom"}
                 </SelectItem>
               ))}
             </SelectContent>
