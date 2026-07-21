@@ -17,9 +17,9 @@ export default function HomeClient({ locale }: { locale: string }) {
 
   // Fonction pour gérer le contact WhatsApp
   const handleContact = () => {
-    const phoneNumber = "212615986477";
+    const phoneNumber = "212700547163";
     const message = encodeURIComponent(
-      "Bonjour Objectif Prépa, je souhaiterais avoir plus d'informations sur vos programmes d'excellence."
+      "Bonjour Objectif Ayoub, je souhaiterais avoir plus d'informations sur vos programmes d'excellence."
     );
 
     // Tentative d'ouverture directe via le protocole 'whatsapp://'
@@ -146,7 +146,7 @@ export default function HomeClient({ locale }: { locale: string }) {
               <div className="relative z-10 rounded-full overflow-hidden shadow-2xl border-[2px] border-white aspect-square w-full max-w-[450px]">
                 <div className="relative w-full h-full">
                   <Image
-                    src="/ahmed4.jpeg"
+                    src="/aj_logo.jpeg"
                     alt="Center Director"
                     fill
                     className="object-cover"
