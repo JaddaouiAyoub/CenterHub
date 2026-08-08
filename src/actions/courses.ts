@@ -322,17 +322,27 @@ export async function getStudentAvailableCourses(studentId: string) {
 export async function getTeacherSchedule(teacherProfileId: string, startDate?: Date) {
   try {
     const where: any = { teacherId: teacherProfileId };
-    
+
     if (startDate) {
-      const endDate = new Date(startDate);
-      endDate.setDate(endDate.getDate() + 7);
-      
+      const normalizedDate = new Date(startDate);
+      normalizedDate.setHours(12, 0, 0, 0);
+      const startOfDay = new Date(normalizedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(normalizedDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      const day = normalizedDate.getDay();
+
       where.OR = [
-        { recurrence: "WEEKLY" },
+        {
+          AND: [
+            { recurrence: "WEEKLY" },
+            { day }
+          ]
+        },
         {
           AND: [
             { recurrence: "ONCE" },
-            { specificDate: { gte: startDate, lt: endDate } }
+            { specificDate: { gte: startOfDay, lt: endOfDay } }
           ]
         }
       ];
@@ -362,10 +372,26 @@ export async function getTeacherSchedule(teacherProfileId: string, startDate?: D
   }
 }
 
-export async function getCoursesForAttendance(date: Date) {
+function normalizeAttendanceDate(date: Date | string) {
+  if (typeof date === "string") {
+    const [year, month, day] = date.split("-").map(Number);
+    if ([year, month, day].every((value) => Number.isFinite(value))) {
+      const normalized = new Date(year, month - 1, day);
+      normalized.setHours(12, 0, 0, 0);
+      return normalized;
+    }
+  }
+
+  const normalized = new Date(date);
+  normalized.setHours(12, 0, 0, 0);
+  return normalized;
+}
+
+export async function getCoursesForAttendance(date: Date | string) {
   try {
-    const day = date.getDay();
-    const nextDay = new Date(date);
+    const normalizedDate = normalizeAttendanceDate(date);
+    const day = normalizedDate.getDay();
+    const nextDay = new Date(normalizedDate);
     nextDay.setDate(nextDay.getDate() + 1);
 
     const courses = await prisma.course.findMany({
@@ -375,7 +401,7 @@ export async function getCoursesForAttendance(date: Date) {
           { 
             recurrence: "ONCE", 
             specificDate: { 
-              gte: date,
+              gte: normalizedDate,
               lt: nextDay 
             } 
           }

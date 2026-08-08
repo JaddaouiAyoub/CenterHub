@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getCoursesForAttendance } from "@/actions/courses";
 import { getStudentsForCourse, markAttendance, getAttendanceByCourse } from "@/actions/attendance";
 import { 
@@ -27,13 +27,17 @@ export function AttendanceManager() {
   const [students, setStudents] = useState<any[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const courseRequestIdRef = useRef(0);
+  const searchRequestIdRef = useRef(0);
 
   useEffect(() => {
+    const requestId = ++courseRequestIdRef.current;
     const fetchCourses = async () => {
+      setStudents([]);
+      setAttendanceRecords({});
       try {
-        const date = new Date(selectedDate);
-        date.setHours(0, 0, 0, 0);
-        const res = await getCoursesForAttendance(date);
+        const res = await getCoursesForAttendance(selectedDate);
+        if (requestId !== courseRequestIdRef.current) return;
         if (res.courses) {
           setCourses(res.courses);
           if (!res.courses.find((c: any) => c.id === selectedCourse)) {
@@ -43,29 +47,42 @@ export function AttendanceManager() {
           toast.error("Erreur lors du chargement des cours");
         }
       } catch {
-        toast.error("Impossible de charger les cours pour cette date");
+        if (requestId === courseRequestIdRef.current) {
+          toast.error("Impossible de charger les cours pour cette date");
+        }
       }
     };
     fetchCourses();
   }, [selectedDate]);
 
-  const handleSearch = async () => {
-    if (!selectedCourse || !selectedDate) return;
+  const handleSearch = async (courseId: string | null = selectedCourse) => {
+    if (!courseId || !selectedDate) return;
+    const requestId = ++searchRequestIdRef.current;
     setLoading(true);
-    const [sData, aData] = await Promise.all([
-      getStudentsForCourse(selectedCourse),
-      getAttendanceByCourse(selectedCourse, new Date(selectedDate))
-    ]);
+    try {
+      const [sData, aData] = await Promise.all([
+        getStudentsForCourse(courseId),
+        getAttendanceByCourse(courseId, selectedDate)
+      ]);
 
-    if (sData.students) {
-      setStudents(sData.students);
-      const records: Record<string, string> = {};
-      aData.attendance?.forEach((a: any) => {
-        records[a.studentId] = a.status;
-      });
-      setAttendanceRecords(records);
+      if (requestId !== searchRequestIdRef.current) return;
+      if (sData.students) {
+        setStudents(sData.students);
+        const records: Record<string, string> = {};
+        aData.attendance?.forEach((a: any) => {
+          records[a.studentId] = a.status;
+        });
+        setAttendanceRecords(records);
+      }
+    } catch {
+      if (requestId === searchRequestIdRef.current) {
+        toast.error("Erreur lors de la récupération des données");
+      }
+    } finally {
+      if (requestId === searchRequestIdRef.current) {
+        setLoading(false);
+      }
     }
-    setLoading(false);
   };
 
   const handleMark = async (studentId: string, status: string) => {
@@ -91,20 +108,29 @@ export function AttendanceManager() {
           </div>
         </div>
         
-        <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-          <div className="space-y-2">
+        <div className="p-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:gap-4">
+          <div className="flex-1 space-y-2 min-w-0">
             <Label className="text-slate-600 font-medium">Date de la session</Label>
             <Input 
               type="date" 
               value={selectedDate} 
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="border-slate-200 focus:ring-indigo-500 rounded-lg h-11"
+              className="w-full border-slate-200 focus:ring-indigo-500 rounded-lg h-11"
             />
           </div>
-          <div className="space-y-2">
+
+          <div className="flex-1 min-w-0 space-y-2">
             <Label className="text-slate-600 font-medium">Cours / Session</Label>
-            <Select onValueChange={(val) => setSelectedCourse(val)} value={selectedCourse || undefined}>
-              <SelectTrigger className="border-slate-200 focus:ring-indigo-500 rounded-lg h-11">
+            <Select
+              onValueChange={(val) => {
+                setSelectedCourse(val);
+                if (val) {
+                  void handleSearch(val);
+                }
+              }}
+              value={selectedCourse ?? ""}
+            >
+              <SelectTrigger className="w-full border-slate-200 focus:ring-indigo-500 rounded-lg h-12 px-4 py-3 text-base">
                 <SelectValue placeholder="Choisir un cours">
                   {selectedCourse && courses.length > 0 ? (
                     (() => {
@@ -114,7 +140,7 @@ export function AttendanceManager() {
                   ) : "Choisir un cours"}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="min-w-[280px]">
                 {courses.map(c => (
                   <SelectItem key={c.id} value={c.id?.toString()}>
                     {c.subject.name} - {c.class.name} ({c.startTime})
@@ -123,12 +149,15 @@ export function AttendanceManager() {
               </SelectContent>
             </Select>
           </div>
-          <Button 
-            onClick={handleSearch} 
-            className="bg-indigo-600 hover:bg-indigo-700 h-11 rounded-lg text-white font-medium shadow-sm transition-all active:scale-95"
-          >
-            <Search className="w-4 h-4 mr-2" /> Rechercher les étudiants
-          </Button>
+
+          <div className="w-full lg:w-auto">
+            <Button 
+              onClick={() => void handleSearch()} 
+              className="w-full lg:w-auto bg-indigo-600 hover:bg-indigo-700 h-11 rounded-lg text-white font-medium shadow-sm transition-all active:scale-95"
+            >
+              <Search className="w-4 h-4 mr-2" /> Rechercher les étudiants
+            </Button>
+          </div>
         </div>
       </div>
 

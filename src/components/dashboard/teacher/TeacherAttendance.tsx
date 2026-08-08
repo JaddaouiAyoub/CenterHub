@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getTeacherSchedule } from "@/actions/courses";
 import { getStudentsForCourse, markAttendance, getAttendanceByCourse } from "@/actions/attendance";
 import { 
@@ -28,27 +28,38 @@ export function TeacherAttendance({ teacherProfileId }: { teacherProfileId: stri
   const [attendanceRecords, setAttendanceRecords] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [loadingSchedule, setLoadingSchedule] = useState(true);
+  const searchRequestIdRef = useRef(0);
   const selectedCourseData = courses.find(
     c => c.id.toString() === selectedCourse
   );
   useEffect(() => {
     const fetchCourses = async () => {
-      const res = await getTeacherSchedule(teacherProfileId);
-      if (res.courses) setCourses(res.courses);
+      setLoadingSchedule(true);
+      setStudents([]);
+      setAttendanceRecords({});
+      const res = await getTeacherSchedule(teacherProfileId, new Date(selectedDate));
+      if (res.courses) {
+        setCourses(res.courses);
+        if (!res.courses.find((c: any) => c.id.toString() === selectedCourse)) {
+          setSelectedCourse(null);
+        }
+      }
       setLoadingSchedule(false);
     };
     fetchCourses();
-  }, [teacherProfileId]);
+  }, [teacherProfileId, selectedDate]);
 
-  const handleSearch = async () => {
-    if (!selectedCourse || !selectedDate) return;
+  const handleSearch = async (courseId: string | null = selectedCourse) => {
+    if (!courseId || !selectedDate) return;
+    const requestId = ++searchRequestIdRef.current;
     setLoading(true);
     try {
       const [sData, aData] = await Promise.all([
-        getStudentsForCourse(selectedCourse),
-        getAttendanceByCourse(selectedCourse, new Date(selectedDate))
+        getStudentsForCourse(courseId),
+        getAttendanceByCourse(courseId, selectedDate)
       ]);
 
+      if (requestId !== searchRequestIdRef.current) return;
       if (sData.students) {
         setStudents(sData.students);
         const records: Record<string, string> = {};
@@ -58,9 +69,13 @@ export function TeacherAttendance({ teacherProfileId }: { teacherProfileId: stri
         setAttendanceRecords(records);
       }
     } catch (error) {
-      toast.error("Erreur lors de la récupération des données");
+      if (requestId === searchRequestIdRef.current) {
+        toast.error("Erreur lors de la récupération des données");
+      }
     } finally {
-      setLoading(false);
+      if (requestId === searchRequestIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -94,27 +109,35 @@ export function TeacherAttendance({ teacherProfileId }: { teacherProfileId: stri
           </div>
         </div>
         
-        <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-          <div className="space-y-2">
+        <div className="p-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:gap-4">
+          <div className="flex-1 space-y-2 min-w-0">
             <Label className="text-slate-600 font-medium">Date du cours</Label>
             <Input 
               type="date" 
               value={selectedDate} 
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="border-slate-200 focus:ring-blue-500 rounded-lg h-11"
+              className="w-full border-slate-200 focus:ring-blue-500 rounded-lg h-11"
             />
           </div>
-          <div className="space-y-2">
+          <div className="flex-1 min-w-0 space-y-2">
             <Label className="text-slate-600 font-medium">Sélectionner une séance</Label>
-            <Select onValueChange={(val) => setSelectedCourse(val)} value={selectedCourse || ""}>
-              <SelectTrigger className="border-slate-200 focus:ring-blue-500 rounded-lg h-11 text-slate-700">
+            <Select
+              onValueChange={(val) => {
+                setSelectedCourse(val);
+                if (val) {
+                  void handleSearch(val);
+                }
+              }}
+              value={selectedCourse ?? ""}
+            >
+              <SelectTrigger className="w-full border-slate-200 focus:ring-blue-500 rounded-lg h-12 px-4 py-3 text-base text-slate-700">
                 <SelectValue placeholder="Choisir une séance">
                   {selectedCourseData
                     ? `${selectedCourseData.subject.name} - ${selectedCourseData.class.name} (${selectedCourseData.startTime})`
                     : "Choisir une séance"}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="min-w-[280px]">
                 {courses.map(c => (
                   <SelectItem key={c.id} value={c.id.toString()}>
                     {c.subject.name} - {c.class.name} ({c.startTime})
@@ -123,13 +146,15 @@ export function TeacherAttendance({ teacherProfileId }: { teacherProfileId: stri
               </SelectContent>
             </Select>
           </div>
-          <Button 
-            onClick={handleSearch} 
-            disabled={!selectedCourse}
-            className="bg-blue-600 hover:bg-blue-700 h-11 rounded-lg text-white font-medium shadow-sm"
-          >
-            <Search className="w-4 h-4 mr-2" /> Charger la liste d'appel
-          </Button>
+          <div className="w-full lg:w-auto">
+            <Button 
+              onClick={() => void handleSearch()} 
+              disabled={!selectedCourse}
+              className="w-full lg:w-auto bg-blue-600 hover:bg-blue-700 h-11 rounded-lg text-white font-medium shadow-sm"
+            >
+              <Search className="w-4 h-4 mr-2" /> Charger la liste d'appel
+            </Button>
+          </div>
         </div>
       </div>
 
