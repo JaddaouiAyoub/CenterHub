@@ -21,7 +21,6 @@ type SelectOption = {
 type CourseCreateFormProps = {
   subjects: SelectOption[];
   classes: SelectOption[];
-  // name peut être null : User.name est String? dans le schema Prisma
   teachers: SelectOption[];
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
 };
@@ -43,6 +42,16 @@ export function CourseCreateForm({ subjects, classes, teachers, onSubmit }: Cour
       setDay("");
     }
   };
+
+  // Même logique que dans CourseEditForm : on calcule nous-mêmes le label
+  // affiché dans SelectValue, pour ne jamais laisser apparaître l'id brut.
+  const classLabel = classes.find((c) => c.id?.toString() === classId)?.name;
+  const teacherLabel =
+    teacherId === ""
+      ? undefined
+      : teachers.find((t) => t.teacherProfile?.id?.toString() === teacherId)?.name || "Enseignant sans nom";
+  const subjectLabel = subjects.find((s) => s.id?.toString() === subjectId)?.name;
+  const dayLabel = day !== "" ? DAYS[(parseInt(day, 10) + 6) % 7] : undefined;
 
   return (
     <form onSubmit={onSubmit} className="p-6 space-y-4 bg-white">
@@ -69,7 +78,7 @@ export function CourseCreateForm({ subjects, classes, teachers, onSubmit }: Cour
           <Label className="text-slate-600">Classe / Groupe</Label>
           <Select name="classId" value={classId} onValueChange={(value) => setClassId(value || "")}>
             <SelectTrigger className="border-slate-200">
-              <SelectValue placeholder="Choisir la classe" />
+              <SelectValue placeholder="Choisir la classe">{classLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {classes.map((c) => (
@@ -86,7 +95,7 @@ export function CourseCreateForm({ subjects, classes, teachers, onSubmit }: Cour
           <Label className="text-slate-600">Enseignant</Label>
           <Select name="teacherId" value={teacherId} onValueChange={(value) => setTeacherId(value || "")}>
             <SelectTrigger className="border-slate-200">
-              <SelectValue placeholder="Facultatif" />
+              <SelectValue placeholder="Facultatif">{teacherLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="">Aucun enseignant</SelectItem>
@@ -103,7 +112,7 @@ export function CourseCreateForm({ subjects, classes, teachers, onSubmit }: Cour
           <Label className="text-slate-600">Matière</Label>
           <Select name="subjectId" value={subjectId} onValueChange={(value) => setSubjectId(value || "")}>
             <SelectTrigger className="border-slate-200">
-              <SelectValue placeholder="Obligatoire" />
+              <SelectValue placeholder="Obligatoire">{subjectLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {subjects.map((s) => (
@@ -121,7 +130,7 @@ export function CourseCreateForm({ subjects, classes, teachers, onSubmit }: Cour
             <Label className="text-slate-600">Jour</Label>
             <Select name="day" value={day} onValueChange={(value) => setDay(value || "")}>
               <SelectTrigger className="border-slate-200 bg-white">
-                <SelectValue placeholder="Jour" />
+                <SelectValue placeholder="Jour">{dayLabel}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {DAYS.map((d, i) => (
