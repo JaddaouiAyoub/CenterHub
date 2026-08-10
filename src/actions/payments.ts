@@ -20,6 +20,7 @@ export async function getPayments(search = "", page = 1, pageSize = 10) {
         take: pageSize,
         select: {
           id: true,
+          studentId: true,
           amount: true,
           date: true,
           month: true,
