@@ -103,15 +103,22 @@ export function PaymentManager() {
 
   const handleUpdatePayment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    selectedCourses.forEach(id => formData.append("courseIds", id));
-    const res = await updatePayment(editingPayment.id, formData);
-    if (res.success) {
-      toast.success("Paiement mis à jour");
-      setEditingPayment(null);
-      fetchData();
-    } else {
-      toast.error(res.error || "Échec de la mise à jour");
+    try {
+      const formData = new FormData(e.currentTarget);
+      selectedCourses.forEach(id => formData.append("courseIds", id));
+      const res = await updatePayment(editingPayment.id, formData);
+      console.log("updatePayment response:", res);
+      if (res.success) {
+        toast.success("Paiement mis à jour");
+        setEditingPayment(null);
+        fetchData();
+      } else {
+        console.error("updatePayment returned error:", res.error);
+        toast.error(res.error || "Échec de la mise à jour");
+      }
+    } catch (err) {
+      console.error("updatePayment exception:", err);
+      toast.error("Erreur lors de la mise à jour (voir console)");
     }
   };
 
@@ -302,6 +309,7 @@ export function PaymentManager() {
             <p className="text-amber-100 text-sm mt-1">Mise à jour des informations de paiement.</p>
           </div>
           <form onSubmit={handleUpdatePayment} className="p-6 space-y-4 bg-white">
+            <input type="hidden" name="studentId" value={editingPayment?.studentId ?? ""} />
             <div className="space-y-2">
               <Label className="text-slate-600">Étudiant</Label>
               <Select key={`student-${editingPayment?.id}`} name="studentId" defaultValue={editingPayment?.studentId?.toString()} disabled>
@@ -353,10 +361,10 @@ export function PaymentManager() {
 
             <div className="space-y-2">
               <Label className="text-slate-600">Cours Concernés</Label>
-              <MultiSelect 
+                <MultiSelect 
                 key={`courses-${editingPayment?.id}`}
                 options={studentCourses.map(c => ({ id: c.id, name: `${c.subject.name} - ${c.name}` }))}
-                selectedIds={selectedCourses}
+                selectedIds={selectedCourses || []}
                 onChange={setSelectedCourses}
                 placeholder="Choisir les cours"
               />
@@ -364,11 +372,11 @@ export function PaymentManager() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-slate-600">Montant (DHS)</Label>
-                <Input key={`amount-${editingPayment?.id}`} name="amount" type="number" step="0.01" defaultValue={editingPayment?.amount} required className="border-slate-200" />
+                <Input key={`amount-${editingPayment?.id}`} name="amount" type="number" step="0.01" defaultValue={editingPayment?.amount ?? ""} required className="border-slate-200" />
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-600">Moyen</Label>
-                <Select key={`method-${editingPayment?.id}`} name="method" defaultValue={editingPayment?.method}>
+                <Select key={`method-${editingPayment?.id}`} name="method" defaultValue={editingPayment?.method ?? ""}>
                   <SelectTrigger className="border-slate-200">
                     <SelectValue />
                   </SelectTrigger>
@@ -383,7 +391,7 @@ export function PaymentManager() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-slate-600">Mois</Label>
-                <Select key={`month-${editingPayment?.id}`} name="month" defaultValue={editingPayment?.month?.toString()}>
+                <Select key={`month-${editingPayment?.id}`} name="month" defaultValue={editingPayment?.month?.toString() ?? ""}>
                   <SelectTrigger className="border-slate-200">
                     <SelectValue placeholder="Mois" />
                   </SelectTrigger>
@@ -396,12 +404,12 @@ export function PaymentManager() {
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-600">Année</Label>
-                <Input key={`year-${editingPayment?.id}`} name="year" type="number" defaultValue={editingPayment?.year} className="border-slate-200" />
+                <Input key={`year-${editingPayment?.id}`} name="year" type="number" defaultValue={editingPayment?.year ?? ""} className="border-slate-200" />
               </div>
             </div>
             <div className="space-y-2">
               <Label className="text-slate-600">Statut</Label>
-              <Select key={`status-${editingPayment?.id}`} name="status" defaultValue={editingPayment?.status}>
+              <Select key={`status-${editingPayment?.id}`} name="status" defaultValue={editingPayment?.status ?? ""}>
                 <SelectTrigger className="border-slate-200">
                   <SelectValue />
                 </SelectTrigger>

@@ -127,6 +127,7 @@ export async function updatePayment(id: string, formData: FormData) {
     revalidatePath("/dashboard");
     return { success: "Payment updated successfully" };
   } catch (error) {
+    console.error("updatePayment error:", error);
     return { error: "Failed to update payment" };
   }
 }
