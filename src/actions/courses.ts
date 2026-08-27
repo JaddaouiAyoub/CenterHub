@@ -326,24 +326,24 @@ export async function getTeacherSchedule(teacherProfileId: string, startDate?: D
     if (startDate) {
       const normalizedDate = new Date(startDate);
       normalizedDate.setHours(12, 0, 0, 0);
-      const startOfDay = new Date(normalizedDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(normalizedDate);
-      endOfDay.setHours(23, 59, 59, 999);
-      const day = normalizedDate.getDay();
+
+      const startOfWeek = new Date(normalizedDate);
+      const diffToMonday = (normalizedDate.getDay() + 6) % 7;
+      startOfWeek.setDate(normalizedDate.getDate() - diffToMonday);
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
 
       where.OR = [
+        { recurrence: "WEEKLY" },
         {
-          AND: [
-            { recurrence: "WEEKLY" },
-            { day }
-          ]
-        },
-        {
-          AND: [
-            { recurrence: "ONCE" },
-            { specificDate: { gte: startOfDay, lt: endOfDay } }
-          ]
+          recurrence: "ONCE",
+          specificDate: {
+            gte: startOfWeek,
+            lte: endOfWeek
+          }
         }
       ];
     }
