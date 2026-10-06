@@ -12,7 +12,6 @@ import { fr } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PurchaseForm } from "./PurchaseForm";
 import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface PurchaseTableProps {
   purchases: PurchaseDTO[];
@@ -99,11 +98,9 @@ export function PurchaseTable({ purchases, total, totalPages, page }: PurchaseTa
 
         <div className="flex-1 text-right">
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-            <DialogTrigger>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20">
-                <Plus className="w-4 h-4 mr-2" />
-                Enregistrer un achat
-              </Button>
+            <DialogTrigger className="inline-flex h-10 items-center justify-center rounded-md bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700">
+              <Plus className="mr-2 h-4 w-4" />
+              Enregistrer un achat
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px] border-none bg-white dark:bg-slate-900 shadow-2xl">
               <DialogHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
@@ -114,7 +111,7 @@ export function PurchaseTable({ purchases, total, totalPages, page }: PurchaseTa
                   Nouvel Achat (Admin)
                 </DialogTitle>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Enregistrez manuellement l'achat d'une ressource par un étudiant.
+                  Enregistrez manuellement l&apos;achat d&apos;une ressource par un étudiant.
                 </p>
               </DialogHeader>
               <PurchaseForm onSuccess={() => { setIsAddOpen(false); router.refresh(); }} />

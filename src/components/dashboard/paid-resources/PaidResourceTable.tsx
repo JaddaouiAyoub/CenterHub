@@ -74,13 +74,11 @@ function ResourceActions({ resource, onAction }: { resource: PaidResourceDTO; on
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
-        <button
-          disabled={isPending}
-          className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-        >
-          <MoreVertical className="w-4 h-4 text-slate-500" />
-        </button>
+      <DropdownMenuTrigger
+        disabled={isPending}
+        className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+      >
+        <MoreVertical className="w-4 h-4 text-slate-500" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
         <DropdownMenuItem>

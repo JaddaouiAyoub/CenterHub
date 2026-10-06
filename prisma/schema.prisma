@@ -73,6 +73,7 @@ model StudentProfile {
   subjectResourceViews SubjectResourceView[]
   // Paid Resources (back-relation — additive)
   paidResourcePurchases PaidResourcePurchase[]
+  paidFormationPurchases PaidFormationPurchase[]
 }
 
 
@@ -357,6 +358,110 @@ model PaidResourcePurchase {
   @@unique([resourceId, studentId]) // one purchase per resource per student
   @@index([studentId])
   @@index([resourceId])
+  @@index([purchasedAt])
+  @@index([status])
+  @@index([method])
+}
+
+enum PaidFormationStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum PaidFormationResourceType {
+  PDF
+  IMAGE
+  VIDEO
+}
+
+enum PaidFormationResourceSource {
+  DRIVE
+  URL
+}
+
+enum PaidFormationResourceStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum PaidFormationPurchaseStatus {
+  PENDING
+  COMPLETED
+  REFUNDED
+}
+
+model PaidFormation {
+  id           String              @id @default(cuid())
+  name         String
+  description  String?
+  price        Float
+  status       PaidFormationStatus @default(DRAFT)
+  totalSales   Int                 @default(0)
+  totalRevenue Float               @default(0)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  folders   PaidFormationFolder[]
+  purchases PaidFormationPurchase[]
+
+  @@index([status])
+  @@index([name])
+  @@index([createdAt])
+}
+
+model PaidFormationFolder {
+  id          String   @id @default(cuid())
+  name        String
+  formationId String
+  formation   PaidFormation @relation(fields: [formationId], references: [id], onDelete: Cascade)
+  parentId    String?
+  parent      PaidFormationFolder? @relation("PaidFormationFolderTree", fields: [parentId, formationId], references: [id, formationId], onDelete: Cascade)
+  children    PaidFormationFolder[] @relation("PaidFormationFolderTree")
+  resources   PaidFormationResource[]
+  createdAt   DateTime @default(now())
+
+  @@unique([id, formationId])
+  @@unique([formationId, parentId, name])
+  @@index([formationId])
+  @@index([parentId])
+}
+
+model PaidFormationResource {
+  id          String                       @id @default(cuid())
+  title       String
+  description String?
+  type        PaidFormationResourceType
+  mimeType    String
+  source      PaidFormationResourceSource  @default(DRIVE)
+  driveFileId String?
+  externalUrl String?
+  status      PaidFormationResourceStatus  @default(DRAFT)
+  folderId    String
+  folder      PaidFormationFolder          @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  createdAt   DateTime                     @default(now())
+  updatedAt   DateTime                     @updatedAt
+
+  @@index([folderId])
+  @@index([status])
+  @@index([type])
+}
+
+model PaidFormationPurchase {
+  id          String                       @id @default(cuid())
+  formationId String
+  formation   PaidFormation                @relation(fields: [formationId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     StudentProfile               @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  amountPaid  Float
+  method      String                       @default("CASH")
+  status      PaidFormationPurchaseStatus  @default(COMPLETED)
+  purchasedAt DateTime                     @default(now())
+
+  @@unique([formationId, studentId])
+  @@index([studentId])
+  @@index([formationId])
   @@index([purchasedAt])
   @@index([status])
   @@index([method])
