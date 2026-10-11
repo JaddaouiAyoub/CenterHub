@@ -57,15 +57,21 @@ export function PaidFormationResourceViewer({
               <PdfViewer url={streamUrl} onLoadSuccess={markLoaded} onLoadError={markFailed} />
             </div>
           ) : mimeType.startsWith("video/") ? (
-            <video src={streamUrl} controls controlsList="nodownload noremoteplayback" disablePictureInPicture playsInline draggable={false} onLoadedData={markLoaded} onError={markFailed} className="max-h-[75vh] w-full" />
+            <video src={streamUrl} preload="metadata" controls controlsList="nodownload noremoteplayback" disablePictureInPicture playsInline draggable={false} onLoadedMetadata={markLoaded} onCanPlay={markLoaded} onError={markFailed} className="aspect-video max-h-[75vh] w-full bg-black object-contain" />
           ) : mimeType.startsWith("image/") ? (
             <Image src={streamUrl} alt={title} width={1600} height={1200} unoptimized draggable={false} onLoad={markLoaded} onError={markFailed} className="mx-auto max-h-[75vh] max-w-full object-contain" />
           ) : (
             <div className="flex h-64 items-center justify-center gap-2 text-sm text-white"><Play className="h-4 w-4" />Format non prévisualisable</div>
           )}
           {loading && mimeType !== "application/pdf" && (
-            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-slate-950/75 text-white" role="status" aria-live="polite">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+            <div
+              className={mimeType.startsWith("video/")
+                ? "pointer-events-none absolute left-3 top-3 z-20 flex items-center gap-2 rounded bg-slate-950/75 px-3 py-2 text-white"
+                : "absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-slate-950/75 text-white"}
+              role="status"
+              aria-live="polite"
+            >
+              <Loader2 className="h-5 w-5 animate-spin text-blue-400" />
               <span className="text-sm">Chargement de la ressource…</span>
             </div>
           )}

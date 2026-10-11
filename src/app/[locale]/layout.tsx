@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "../globals.css";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { routing } from "@/i18n/routing";
@@ -24,7 +23,7 @@ export default async function LocaleLayout({
 }) {
   const { locale } = await params;
 
-  if (!routing.locales.includes(locale as any)) {
+  if (!routing.locales.some((supportedLocale) => supportedLocale === locale)) {
     notFound();
   }
 
@@ -33,13 +32,11 @@ export default async function LocaleLayout({
   const direction = locale === "ar" ? "rtl" : "ltr";
 
   return (
-    <html lang={locale} dir={direction}>
-      <body className={inter.className}>
-        <NextIntlClientProvider messages={messages} locale={locale}>
-          {children}
-          <Toaster position="top-right" richColors closeButton />
-        </NextIntlClientProvider>
-      </body>
-    </html>
+    <div lang={locale} dir={direction} className={inter.className}>
+      <NextIntlClientProvider messages={messages} locale={locale}>
+        {children}
+        <Toaster position="top-right" richColors closeButton />
+      </NextIntlClientProvider>
+    </div>
   );
 }
