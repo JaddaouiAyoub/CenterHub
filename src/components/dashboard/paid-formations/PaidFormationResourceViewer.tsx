@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AlertCircle, Loader2, Play } from "lucide-react";
 import Image from "next/image";
+import { PdfViewer } from "@/components/dashboard/paid-resources/PdfViewer";
 
 export function PaidFormationResourceViewer({
   resourceId,
@@ -20,23 +21,23 @@ export function PaidFormationResourceViewer({
   const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
-    if (!loading) return;
+    if (!loading || mimeType === "application/pdf") return;
     const timer = setTimeout(() => {
       setLoading(false);
       setLoadError(true);
     }, 30000);
     return () => clearTimeout(timer);
-  }, [loading]);
+  }, [loading, mimeType]);
 
-  const markLoaded = () => {
+  const markLoaded = useCallback(() => {
     setLoading(false);
     setLoadError(false);
-  };
+  }, []);
 
-  const markFailed = () => {
+  const markFailed = useCallback(() => {
     setLoading(false);
     setLoadError(true);
-  };
+  }, []);
 
   return (
     <div className="relative min-h-64 overflow-hidden rounded-md bg-slate-950" aria-busy={loading}>
@@ -48,7 +49,9 @@ export function PaidFormationResourceViewer({
       ) : (
         <>
           {mimeType === "application/pdf" ? (
-            <iframe title={title} src={`${streamUrl}#toolbar=0&navpanes=0`} onLoad={markLoaded} onError={markFailed} className="h-[75vh] w-full bg-white" />
+            <div className="h-[75vh] w-full" onContextMenu={(event) => event.preventDefault()}>
+              <PdfViewer url={streamUrl} onLoadSuccess={markLoaded} onLoadError={markFailed} />
+            </div>
           ) : mimeType.startsWith("video/") ? (
             <video src={streamUrl} controls controlsList="nodownload noremoteplayback" disablePictureInPicture playsInline onLoadedData={markLoaded} onError={markFailed} className="max-h-[75vh] w-full" />
           ) : mimeType.startsWith("image/") ? (
@@ -56,7 +59,7 @@ export function PaidFormationResourceViewer({
           ) : (
             <div className="flex h-64 items-center justify-center gap-2 text-sm text-white"><Play className="h-4 w-4" />Format non prévisualisable</div>
           )}
-          {loading && (
+          {loading && mimeType !== "application/pdf" && (
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-slate-950/75 text-white" role="status" aria-live="polite">
               <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
               <span className="text-sm">Chargement de la ressource…</span>
