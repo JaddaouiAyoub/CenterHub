@@ -4,6 +4,19 @@ import { streamFileFromDrive } from "@/lib/google-drive";
 import { getPaidFormationResourceStreamData, verifyStudentFormationPurchase } from "@/lib/paid-formations";
 
 export const dynamic = "force-dynamic";
+const MAX_RANGE_BYTES = 1024 * 1024;
+
+function limitRange(range: string | null) {
+  const match = range?.match(/^bytes=(\d+)-(\d*)$/i);
+  if (!match) return range;
+
+  const start = Number(match[1]);
+  const requestedEnd = match[2] ? Number(match[2]) : Number.POSITIVE_INFINITY;
+  if (!Number.isSafeInteger(start) || requestedEnd < start) return range;
+
+  const end = Math.min(requestedEnd, start + MAX_RANGE_BYTES - 1);
+  return `bytes=${start}-${end}`;
+}
 
 function extractDriveFileId(url: string | null) {
   if (!url) return null;
@@ -45,7 +58,7 @@ export async function GET(
 
     const driveFileId = resource.driveFileId || (resource.source === "URL" ? extractDriveFileId(resource.externalUrl) : null);
     if (driveFileId) {
-      const range = request.headers.get("range");
+      const range = limitRange(request.headers.get("range"));
       let driveResponse: Response | null = null;
       try {
         const rangeHeaders: Record<string, string> = { "User-Agent": "Mozilla/5.0" };
