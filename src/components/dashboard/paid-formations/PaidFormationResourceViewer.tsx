@@ -40,7 +40,11 @@ export function PaidFormationResourceViewer({
   }, []);
 
   return (
-    <div className="relative min-h-64 overflow-hidden rounded-md bg-slate-950" aria-busy={loading}>
+    <div
+      className="relative min-h-64 select-none overflow-hidden rounded-md bg-slate-950"
+      aria-busy={loading}
+      onContextMenu={(event) => event.preventDefault()}
+    >
       {loadError ? (
         <div className="flex min-h-64 flex-col items-center justify-center gap-3 p-6 text-center text-white">
           <AlertCircle className="h-8 w-8 text-amber-400" />
@@ -49,11 +53,11 @@ export function PaidFormationResourceViewer({
       ) : (
         <>
           {mimeType === "application/pdf" ? (
-            <div className="h-[75vh] w-full" onContextMenu={(event) => event.preventDefault()}>
+            <div className="h-[75vh] w-full">
               <PdfViewer url={streamUrl} onLoadSuccess={markLoaded} onLoadError={markFailed} />
             </div>
           ) : mimeType.startsWith("video/") ? (
-            <video src={streamUrl} controls controlsList="nodownload noremoteplayback" disablePictureInPicture playsInline onLoadedData={markLoaded} onError={markFailed} className="max-h-[75vh] w-full" />
+            <video src={streamUrl} controls controlsList="nodownload noremoteplayback" disablePictureInPicture playsInline draggable={false} onLoadedData={markLoaded} onError={markFailed} className="max-h-[75vh] w-full" />
           ) : mimeType.startsWith("image/") ? (
             <Image src={streamUrl} alt={title} width={1600} height={1200} unoptimized draggable={false} onLoad={markLoaded} onError={markFailed} className="mx-auto max-h-[75vh] max-w-full object-contain" />
           ) : (
