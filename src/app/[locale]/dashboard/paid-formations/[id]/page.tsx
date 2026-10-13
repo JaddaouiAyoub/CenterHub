@@ -11,6 +11,17 @@ interface Props {
   params: Promise<{ locale: string; id: string }>;
 }
 
+function extractDriveFileId(url: string | null) {
+  if (!url) return null;
+  try {
+    const parsedUrl = new URL(url);
+    if (!["drive.google.com", "docs.google.com"].includes(parsedUrl.hostname.toLowerCase())) return null;
+    return parsedUrl.pathname.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)?.[1] ?? parsedUrl.searchParams.get("id");
+  } catch {
+    return null;
+  }
+}
+
 export default async function PaidFormationDetailPage({ params }: Props) {
   const { locale, id } = await params;
   const session = await auth();
@@ -37,7 +48,7 @@ export default async function PaidFormationDetailPage({ params }: Props) {
           resources: {
             where: canManage ? undefined : { status: "PUBLISHED" },
             orderBy: { createdAt: "asc" },
-            select: { id: true, title: true, description: true, type: true, status: true, driveFileId: true },
+            select: { id: true, title: true, description: true, type: true, status: true, driveFileId: true, externalUrl: true },
           },
         },
       },
@@ -60,7 +71,11 @@ export default async function PaidFormationDetailPage({ params }: Props) {
   );
   const folders = formation.folders.map((folder) => ({
     ...folder,
-    resources: folder.resources.map((resource) => ({ ...resource, folderId: folder.id })),
+    resources: folder.resources.map(({ externalUrl, ...resource }) => ({
+      ...resource,
+      driveFileId: resource.driveFileId || extractDriveFileId(externalUrl),
+      folderId: folder.id,
+    })),
   }));
   const resources = folders.flatMap((folder) => folder.resources.map((resource) => ({
     id: resource.id,
