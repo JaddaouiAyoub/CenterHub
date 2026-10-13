@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { AlertCircle, ExternalLink, Loader2, Play } from "lucide-react";
+import { AlertCircle, Loader2, Play } from "lucide-react";
 import Image from "next/image";
 import { PdfViewer } from "@/components/dashboard/paid-resources/PdfViewer";
 
@@ -25,13 +25,13 @@ export function PaidFormationResourceViewer({
   const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
-    if (!loading || mimeType === "application/pdf" || isDriveVideo) return;
+    if (!loading || mimeType === "application/pdf") return;
     const timer = setTimeout(() => {
       setLoading(false);
       setLoadError(true);
     }, 30000);
     return () => clearTimeout(timer);
-  }, [loading, mimeType, isDriveVideo]);
+  }, [loading, mimeType]);
 
   const markLoaded = useCallback(() => {
     setLoading(false);
@@ -52,7 +52,21 @@ export function PaidFormationResourceViewer({
       {loadError ? (
         <div className="flex min-h-64 flex-col items-center justify-center gap-3 p-6 text-center text-white">
           <AlertCircle className="h-8 w-8 text-amber-400" />
-          <p className="text-sm">Impossible de charger cette ressource. Vérifiez le lien ou réessayez plus tard.</p>
+          <p className="text-sm">
+            {isVideo
+              ? "La lecture dans le lecteur du site a échoué ou a dépassé le délai d’attente."
+              : "Impossible de charger cette ressource. Vérifiez le lien ou réessayez plus tard."}
+          </p>
+          {isDriveVideo && driveFileId && (
+            <a
+              href={`https://drive.google.com/file/d/${encodeURIComponent(driveFileId)}/preview`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+            >
+              Continuer avec Google Drive
+            </a>
+          )}
         </div>
       ) : (
         <>
@@ -61,23 +75,7 @@ export function PaidFormationResourceViewer({
               <PdfViewer url={streamUrl} onLoadSuccess={markLoaded} onLoadError={markFailed} />
             </div>
           ) : isVideo ? (
-            isDriveVideo ? (
-              <div className="flex aspect-video max-h-[75vh] w-full flex-col items-center justify-center gap-3 bg-black p-4 text-center text-white">
-                <Play className="h-10 w-10 text-white/80" />
-                <a
-                  href={`https://drive.google.com/file/d/${encodeURIComponent(driveFileId!)}/preview`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
-                >
-                  Lire avec Google Drive
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-                <p className="text-xs text-white/65">Le lecteur s’ouvrira dans un nouvel onglet.</p>
-              </div>
-            ) : (
-              <video src={streamUrl} preload="metadata" controls controlsList="nodownload noremoteplayback" disablePictureInPicture playsInline draggable={false} onLoadedMetadata={markLoaded} onCanPlay={markLoaded} onError={markFailed} className="aspect-video max-h-[75vh] w-full bg-black object-contain" />
-            )
+            <video src={streamUrl} preload="metadata" controls controlsList="nodownload noremoteplayback" disablePictureInPicture playsInline draggable={false} onCanPlay={markLoaded} onError={markFailed} className="aspect-video max-h-[75vh] w-full bg-black object-contain" />
           ) : mimeType.startsWith("image/") ? (
             <Image src={streamUrl} alt={title} width={1600} height={1200} unoptimized draggable={false} onLoad={markLoaded} onError={markFailed} className="mx-auto max-h-[75vh] max-w-full object-contain" />
           ) : (

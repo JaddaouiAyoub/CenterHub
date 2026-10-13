@@ -10,6 +10,17 @@ interface Props {
   params: Promise<{ locale: string; id: string; resourceId: string }>;
 }
 
+function extractDriveFileId(url: string | null) {
+  if (!url) return null;
+  try {
+    const parsedUrl = new URL(url);
+    if (!["drive.google.com", "docs.google.com"].includes(parsedUrl.hostname.toLowerCase())) return null;
+    return parsedUrl.pathname.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)?.[1] ?? parsedUrl.searchParams.get("id");
+  } catch {
+    return null;
+  }
+}
+
 export default async function PaidFormationResourcePage({ params }: Props) {
   const { locale, id, resourceId } = await params;
   const session = await auth();
@@ -25,6 +36,7 @@ export default async function PaidFormationResourcePage({ params }: Props) {
       title: true,
       mimeType: true,
       driveFileId: true,
+      externalUrl: true,
       status: true,
       folder: {
         select: {
@@ -54,7 +66,7 @@ export default async function PaidFormationResourcePage({ params }: Props) {
           <h1 className="truncate text-xl font-bold text-slate-900 dark:text-white">{resource.title}</h1>
         </div>
       </div>
-      <PaidFormationResourceViewer resourceId={resource.id} title={resource.title} mimeType={resource.mimeType} userName={session.user.name?.trim() || "Étudiant"} driveFileId={resource.driveFileId} />
+      <PaidFormationResourceViewer resourceId={resource.id} title={resource.title} mimeType={resource.mimeType} userName={session.user.name?.trim() || "Étudiant"} driveFileId={resource.driveFileId || extractDriveFileId(resource.externalUrl)} />
     </div>
   );
 }
