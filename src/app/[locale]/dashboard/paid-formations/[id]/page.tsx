@@ -37,7 +37,7 @@ export default async function PaidFormationDetailPage({ params }: Props) {
           resources: {
             where: canManage ? undefined : { status: "PUBLISHED" },
             orderBy: { createdAt: "asc" },
-            select: { id: true, title: true, description: true, type: true, status: true },
+            select: { id: true, title: true, description: true, type: true, status: true, driveFileId: true },
           },
         },
       },

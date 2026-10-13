@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { FileText, Folder, Lock, Play } from "lucide-react";
+import { ExternalLink, FileText, Folder, Lock, Play } from "lucide-react";
 
 interface FormationFolderNode {
   id: string;
   name: string;
   parentId: string | null;
-  resources: { id: string; title: string; description: string | null; type: string; status: string }[];
+  resources: { id: string; title: string; description: string | null; type: string; status: string; driveFileId: string | null }[];
 }
 
 export function PaidFormationStudentContents({
@@ -36,7 +36,18 @@ export function PaidFormationStudentContents({
                 </div>
               </div>
               {hasAccess ? (
-                <Link href={`/${locale}/dashboard/paid-formations/${formationId}/resources/${resource.id}`} className="shrink-0 text-sm font-semibold text-blue-700 hover:underline">Lire</Link>
+                resource.type === "VIDEO" && resource.driveFileId ? (
+                  <a
+                    href={`https://drive.google.com/file/d/${encodeURIComponent(resource.driveFileId)}/preview`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-blue-700 hover:underline"
+                  >
+                    Lire <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                ) : (
+                  <Link href={`/${locale}/dashboard/paid-formations/${formationId}/resources/${resource.id}`} className="shrink-0 text-sm font-semibold text-blue-700 hover:underline">Lire</Link>
+                )
               ) : (
                 <Lock className="h-4 w-4 shrink-0 text-slate-400" aria-label="Accès verrouillé" />
               )}

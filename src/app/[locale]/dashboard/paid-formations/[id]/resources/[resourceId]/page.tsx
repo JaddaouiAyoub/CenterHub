@@ -24,6 +24,7 @@ export default async function PaidFormationResourcePage({ params }: Props) {
       id: true,
       title: true,
       mimeType: true,
+      driveFileId: true,
       status: true,
       folder: {
         select: {
@@ -53,7 +54,7 @@ export default async function PaidFormationResourcePage({ params }: Props) {
           <h1 className="truncate text-xl font-bold text-slate-900 dark:text-white">{resource.title}</h1>
         </div>
       </div>
-      <PaidFormationResourceViewer resourceId={resource.id} title={resource.title} mimeType={resource.mimeType} userName={session.user.name?.trim() || "Étudiant"} />
+      <PaidFormationResourceViewer resourceId={resource.id} title={resource.title} mimeType={resource.mimeType} userName={session.user.name?.trim() || "Étudiant"} driveFileId={resource.driveFileId} />
     </div>
   );
 }
