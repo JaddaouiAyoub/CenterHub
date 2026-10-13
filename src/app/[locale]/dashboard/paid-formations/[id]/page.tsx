@@ -44,7 +44,17 @@ export default async function PaidFormationDetailPage({ params }: Props) {
     },
   });
 
-  if (!formation || (!canManage && formation.status !== "PUBLISHED")) notFound();
+  if (!formation) {
+    console.warn("[paid-formations/detail] Formation not found", { id, role });
+    notFound();
+  }
+  if (!canManage && formation.status !== "PUBLISHED") {
+    console.warn("[paid-formations/detail] Formation unavailable to student", {
+      id,
+      status: formation.status,
+    });
+    notFound();
+  }
   const hasAccess = canManage || Boolean(
     session.user.id && await verifyStudentFormationPurchase(session.user.id, formation.id)
   );
