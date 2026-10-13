@@ -127,7 +127,8 @@ function createStreamHeaders(contentType: string, size: number, sourceHeaders?: 
     "Content-Type": contentType,
     "Content-Disposition": 'inline; filename="formation-resource"',
     "X-Content-Type-Options": "nosniff",
-    "Cache-Control": "private, no-store, no-cache",
+    "Cache-Control": "private, max-age=300",
+    "Vary": "Cookie",
     "Content-Security-Policy": "frame-ancestors 'self'",
   });
   const contentLength = sourceHeaders?.get("Content-Length");
