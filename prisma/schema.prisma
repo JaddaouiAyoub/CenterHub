@@ -43,6 +43,8 @@ model User {
   // Notifications
   sentNotifications  Notification[]     @relation("SentNotifications")
   notificationReads  NotificationRead[]
+
+  gradedFormationExams PaidFormationExamSubmission[]
 }
 
 
@@ -74,6 +76,7 @@ model StudentProfile {
   // Paid Resources (back-relation — additive)
   paidResourcePurchases PaidResourcePurchase[]
   paidFormationPurchases PaidFormationPurchase[]
+  paidFormationExamSubmissions PaidFormationExamSubmission[]
 }
 
 
@@ -392,6 +395,11 @@ enum PaidFormationPurchaseStatus {
   REFUNDED
 }
 
+enum PaidFormationExamSubmissionStatus {
+  PENDING
+  GRADED
+}
+
 model PaidFormation {
   id           String              @id @default(cuid())
   name         String
@@ -416,10 +424,12 @@ model PaidFormationFolder {
   name        String
   formationId String
   formation   PaidFormation @relation(fields: [formationId], references: [id], onDelete: Cascade)
+  isExam      Boolean  @default(false)
   parentId    String?
   parent      PaidFormationFolder? @relation("PaidFormationFolderTree", fields: [parentId, formationId], references: [id, formationId], onDelete: Cascade)
   children    PaidFormationFolder[] @relation("PaidFormationFolderTree")
   resources   PaidFormationResource[]
+  examSubmissions PaidFormationExamSubmission[]
   createdAt   DateTime @default(now())
 
   @@unique([id, formationId])
@@ -465,4 +475,26 @@ model PaidFormationPurchase {
   @@index([purchasedAt])
   @@index([status])
   @@index([method])
+}
+
+model PaidFormationExamSubmission {
+  id            String                            @id @default(cuid())
+  folderId      String
+  folder        PaidFormationFolder               @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  studentId     String
+  student       StudentProfile                    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  submissionUrl String
+  driveFileId   String
+  mimeType      String                            @default("application/pdf")
+  status        PaidFormationExamSubmissionStatus @default(PENDING)
+  grade         Float?
+  remarks       String?
+  gradedById    String?
+  gradedBy      User?                             @relation(fields: [gradedById], references: [id], onDelete: SetNull)
+  submittedAt   DateTime                          @default(now())
+  gradedAt      DateTime?
+
+  @@unique([folderId, studentId])
+  @@index([studentId])
+  @@index([status])
 }

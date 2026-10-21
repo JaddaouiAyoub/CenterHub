@@ -11,14 +11,15 @@ export function PaidFormationResourceViewer({
   mimeType,
   userName,
   driveFileId,
+  streamUrl = `/api/paid-formations/stream/${resourceId}`,
 }: {
   resourceId: string;
   title: string;
   mimeType: string;
   userName: string;
   driveFileId: string | null;
+  streamUrl?: string;
 }) {
-  const streamUrl = `/api/paid-formations/stream/${resourceId}`;
   const isVideo = mimeType.startsWith("video/");
   const isDriveVideo = isVideo && Boolean(driveFileId);
   const [loading, setLoading] = useState(!isDriveVideo);

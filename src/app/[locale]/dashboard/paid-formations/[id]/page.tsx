@@ -3,7 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Lock } from "lucide-react";
 import prisma from "@/lib/prisma";
-import { verifyStudentFormationPurchase } from "@/lib/paid-formations";
+import { formatSubmissionDate } from "@/lib/paid-formation-format";
+import { getStudentProfileId, hasCompletedFormationPurchase } from "@/lib/paid-formations";
 import { PaidFormationManager } from "@/components/dashboard/paid-formations/PaidFormationManager";
 import { PaidFormationStudentContents } from "@/components/dashboard/paid-formations/PaidFormationStudentContents";
 
@@ -18,6 +19,7 @@ export default async function PaidFormationDetailPage({ params }: Props) {
   const role = session.user.role;
   const canManage = ["ADMIN", "TEACHER", "SECRETARY"].includes(role);
   if (!canManage && role !== "STUDENT") redirect(`/${locale}/dashboard`);
+  const studentId = !canManage && session.user.id ? await getStudentProfileId(session.user.id) : null;
 
   const formation = await prisma.paidFormation.findUnique({
     where: { id },
@@ -33,11 +35,24 @@ export default async function PaidFormationDetailPage({ params }: Props) {
           id: true,
           name: true,
           parentId: true,
-          _count: { select: { children: true, resources: true } },
+          isExam: true,
+          _count: { select: { children: true, resources: true, examSubmissions: true } },
           resources: {
             where: canManage ? undefined : { status: "PUBLISHED" },
             orderBy: { createdAt: "asc" },
             select: { id: true, title: true, description: true, type: true, status: true },
+          },
+          examSubmissions: {
+            where: canManage ? undefined : { studentId: studentId ?? "" },
+            orderBy: { submittedAt: "desc" },
+            select: {
+              id: true,
+              status: true,
+              grade: true,
+              remarks: true,
+              submittedAt: true,
+              student: { select: { user: { select: { name: true, email: true } } } },
+            },
           },
         },
       },
@@ -56,11 +71,16 @@ export default async function PaidFormationDetailPage({ params }: Props) {
     notFound();
   }
   const hasAccess = canManage || Boolean(
-    session.user.id && await verifyStudentFormationPurchase(session.user.id, formation.id)
+    studentId && await hasCompletedFormationPurchase(studentId, formation.id)
   );
   const folders = formation.folders.map((folder) => ({
     ...folder,
     resources: folder.resources.map((resource) => ({ ...resource, folderId: folder.id })),
+    examSubmissions: folder.examSubmissions.map(({ student, submittedAt, ...submission }) => ({
+      ...submission,
+      submittedAtLabel: formatSubmissionDate(submittedAt),
+      studentName: student.user.name || student.user.email,
+    })),
   }));
   const resources = folders.flatMap((folder) => folder.resources.map((resource) => ({
     id: resource.id,
@@ -88,13 +108,17 @@ export default async function PaidFormationDetailPage({ params }: Props) {
         <PaidFormationManager
           formationId={formation.id}
           formationStatus={formation.status}
-          folders={folders.map(({ id, name, parentId, _count }) => ({
+          folders={folders.map(({ id, name, parentId, isExam, examSubmissions, _count }) => ({
             id,
             name,
             parentId,
-            canDelete: _count.children === 0 && _count.resources === 0,
+            isExam,
+            submissionCount: examSubmissions.length,
+            pendingSubmissionCount: examSubmissions.filter((submission) => submission.status === "PENDING").length,
+            canDelete: _count.children === 0 && _count.resources === 0 && _count.examSubmissions === 0,
           }))}
           resources={resources}
+          locale={locale}
         />
       ) : (
         <>

@@ -5,9 +5,13 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { PaidFormationResourceStatus, PaidFormationResourceType, PaidFormationStatus } from "@prisma/client";
 import { getFileMetadata } from "@/lib/google-drive";
+import { getStudentProfileId, hasCompletedFormationPurchase } from "@/lib/paid-formations";
 
 const MANAGER_ROLES = ["ADMIN", "TEACHER", "SECRETARY"];
 const ADMIN_ROLES = ["ADMIN", "SECRETARY"];
+const GRADER_ROLES = ["ADMIN", "TEACHER"];
+const DEFAULT_EXAM_FOLDER_NAME = "Examen";
+const EXAM_SUBMISSION_MIME_TYPES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
 const ALLOWED_MIME_TYPES = new Set([
   "application/pdf",
   "image/jpeg",
@@ -66,7 +70,13 @@ export async function createPaidFormation(formData: FormData) {
     if (!formationStatus) return { error: "Statut invalide" };
 
     const formation = await prisma.paidFormation.create({
-      data: { name, description: description || null, price, status: formationStatus },
+      data: {
+        name,
+        description: description || null,
+        price,
+        status: formationStatus,
+        folders: { create: { name: DEFAULT_EXAM_FOLDER_NAME, isExam: true } },
+      },
       select: { id: true },
     });
     revalidateFormationViews(formation.id);
@@ -95,6 +105,7 @@ export async function createPaidFormationFolder(formData: FormData) {
     const formationId = String(formData.get("formationId") || "");
     const name = String(formData.get("name") || "").trim();
     const parentId = String(formData.get("parentId") || "") || null;
+    const isExam = formData.get("isExam") === "true";
     if (!formationId || !name || name.length > 100) return { error: "Nom du dossier invalide" };
 
     const formation = await prisma.paidFormation.findUnique({ where: { id: formationId }, select: { id: true } });
@@ -112,7 +123,7 @@ export async function createPaidFormationFolder(formData: FormData) {
     });
     if (duplicate) return { error: "Un dossier de ce nom existe déjà à cet endroit" };
 
-    await prisma.paidFormationFolder.create({ data: { formationId, name, parentId } });
+    await prisma.paidFormationFolder.create({ data: { formationId, name, parentId, isExam } });
     revalidateFormationViews(formationId);
     return { success: "Dossier créé" };
   } catch (error) {
@@ -152,11 +163,11 @@ export async function deletePaidFormationFolder(id: string) {
       where: { id },
       select: {
         formationId: true,
-        _count: { select: { children: true, resources: true } },
+        _count: { select: { children: true, resources: true, examSubmissions: true } },
       },
     });
     if (!folder) return { error: "Dossier introuvable" };
-    if (folder._count.children || folder._count.resources) {
+    if (folder._count.children || folder._count.resources || folder._count.examSubmissions) {
       return { error: "Déplacez ou supprimez le contenu avant de supprimer ce dossier" };
     }
     await prisma.paidFormationFolder.delete({ where: { id } });
@@ -308,6 +319,93 @@ export async function movePaidFormationResource(id: string, targetFolderId: stri
     await prisma.paidFormationResource.update({ where: { id }, data: { folderId: targetFolderId } });
     revalidateFormationViews(targetFolder.formationId);
     return { success: "Ressource déplacée" };
+  } catch (error) {
+    return { error: errorMessage(error) };
+  }
+}
+
+export async function submitPaidFormationExam(formData: FormData) {
+  try {
+    const session = await requireRole(["STUDENT"]);
+    const folderId = String(formData.get("folderId") || "");
+    const submissionUrl = String(formData.get("submissionUrl") || "").trim();
+    const studentId = session.user.id ? await getStudentProfileId(session.user.id) : null;
+    if (!studentId) return { error: "Profil étudiant introuvable" };
+
+    const folder = await prisma.paidFormationFolder.findUnique({
+      where: { id: folderId },
+      select: {
+        isExam: true,
+        formationId: true,
+        formation: { select: { status: true } },
+        _count: { select: { resources: { where: { status: "PUBLISHED" } } } },
+      },
+    });
+    if (!folder?.isExam || folder.formation.status !== "PUBLISHED") return { error: "Examen introuvable" };
+    if (!folder._count.resources) return { error: "Cet examen n'est pas encore disponible" };
+    if (!await hasCompletedFormationPurchase(studentId, folder.formationId)) return { error: "Accès refusé" };
+
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(submissionUrl);
+    } catch {
+      return { error: "URL Google Drive invalide" };
+    }
+    const isDriveUrl = parsedUrl.protocol === "https:"
+      && ["drive.google.com", "docs.google.com"].includes(parsedUrl.hostname.toLowerCase());
+    const driveFileId = isDriveUrl ? driveIdFromUrl(parsedUrl.href) : null;
+    if (!driveFileId) return { error: "Collez le lien de partage d'un fichier Google Drive" };
+
+    let mimeType = "application/pdf";
+    try {
+      const metadata = await getFileMetadata(driveFileId);
+      if (!EXAM_SUBMISSION_MIME_TYPES.has(metadata.mimeType)) return { error: "La copie doit être un PDF ou une image" };
+      mimeType = metadata.mimeType;
+    } catch (error) {
+      console.warn("Unable to read Google Drive metadata for exam submission:", error);
+    }
+
+    const existing = await prisma.paidFormationExamSubmission.findUnique({
+      where: { folderId_studentId: { folderId, studentId } },
+      select: { status: true },
+    });
+    if (existing?.status === "GRADED") return { error: "Votre copie a déjà été corrigée" };
+
+    const data = { submissionUrl: parsedUrl.href, driveFileId, mimeType, submittedAt: new Date() };
+    await prisma.paidFormationExamSubmission.upsert({
+      where: { folderId_studentId: { folderId, studentId } },
+      create: { folderId, studentId, ...data },
+      update: data,
+    });
+    revalidateFormationViews(folder.formationId);
+    return { success: existing ? "Copie remplacée" : "Examen soumis" };
+  } catch (error) {
+    return { error: errorMessage(error) };
+  }
+}
+
+export async function gradePaidFormationExam(formData: FormData) {
+  try {
+    const session = await requireRole(GRADER_ROLES);
+    const submissionId = String(formData.get("submissionId") || "");
+    const grade = Number(formData.get("grade"));
+    const remarks = String(formData.get("remarks") || "").trim();
+    if (!Number.isFinite(grade) || grade < 0 || grade > 20) return { error: "La note doit être comprise entre 0 et 20" };
+    if (remarks.length > 2000) return { error: "Les remarques sont trop longues" };
+
+    const submission = await prisma.paidFormationExamSubmission.update({
+      where: { id: submissionId },
+      data: {
+        grade,
+        remarks: remarks || null,
+        status: "GRADED",
+        gradedAt: new Date(),
+        gradedById: session.user.id ?? null,
+      },
+      select: { folder: { select: { formationId: true } } },
+    });
+    revalidateFormationViews(submission.folder.formationId);
+    return { success: "Note enregistrée" };
   } catch (error) {
     return { error: errorMessage(error) };
   }

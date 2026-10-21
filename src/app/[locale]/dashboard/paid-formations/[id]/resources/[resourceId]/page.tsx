@@ -4,21 +4,11 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { verifyStudentFormationPurchase } from "@/lib/paid-formations";
+import { extractDriveFileId } from "@/lib/paid-formation-stream";
 import { PaidFormationResourceViewer } from "@/components/dashboard/paid-formations/PaidFormationResourceViewer";
 
 interface Props {
   params: Promise<{ locale: string; id: string; resourceId: string }>;
-}
-
-function extractDriveFileId(url: string | null) {
-  if (!url) return null;
-  try {
-    const parsedUrl = new URL(url);
-    if (!["drive.google.com", "docs.google.com"].includes(parsedUrl.hostname.toLowerCase())) return null;
-    return parsedUrl.pathname.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)?.[1] ?? parsedUrl.searchParams.get("id");
-  } catch {
-    return null;
-  }
 }
 
 export default async function PaidFormationResourcePage({ params }: Props) {

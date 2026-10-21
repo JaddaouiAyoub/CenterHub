@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Archive, FileText, Folder, FolderPlus, Link2, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { Archive, ChevronRight, ChevronsDownUp, ChevronsUpDown, FileText, Folder, FolderOpen, FolderPlus, GraduationCap, Link2, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   createPaidFormationFolder,
@@ -14,12 +14,17 @@ import {
   setPaidFormationStatus,
   setPaidFormationResourceStatus,
 } from "@/actions/paidFormations";
+import { ExamSubmissionsLink } from "./PaidFormationExam";
+import { useExpandedFolders } from "./useExpandedFolders";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface FolderItem {
   id: string;
   name: string;
   parentId: string | null;
+  isExam: boolean;
+  submissionCount: number;
+  pendingSubmissionCount: number;
   canDelete: boolean;
 }
 
@@ -36,11 +41,13 @@ export function PaidFormationManager({
   formationStatus,
   folders,
   resources,
+  locale,
 }: {
   formationId: string;
   formationStatus: string;
   folders: FolderItem[];
   resources: ResourceItem[];
+  locale: string;
 }) {
   const router = useRouter();
   const [folderPending, startFolderTransition] = useTransition();
@@ -51,6 +58,7 @@ export function PaidFormationManager({
   const [createResourceOpen, setCreateResourceOpen] = useState(false);
   const [folderName, setFolderName] = useState("");
   const [parentId, setParentId] = useState("");
+  const [isExamFolder, setIsExamFolder] = useState(false);
   const [editingFolderId, setEditingFolderId] = useState("");
   const [editingFolderName, setEditingFolderName] = useState("");
   const [title, setTitle] = useState("");
@@ -59,6 +67,7 @@ export function PaidFormationManager({
   const [externalUrl, setExternalUrl] = useState("");
   const [resourceType, setResourceType] = useState("PDF");
   const [resourceToDelete, setResourceToDelete] = useState<ResourceItem | null>(null);
+  const { isExpanded, toggle, expandAll, collapseAll } = useExpandedFolders(formationId, folders.map((folder) => folder.id));
 
   const handleCreateFolder = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -66,6 +75,7 @@ export function PaidFormationManager({
     data.set("formationId", formationId);
     data.set("name", folderName);
     data.set("parentId", parentId);
+    data.set("isExam", String(isExamFolder));
     startFolderTransition(async () => {
       const result = await createPaidFormationFolder(data);
       if ("error" in result) {
@@ -75,6 +85,7 @@ export function PaidFormationManager({
       toast.success(result.success);
       setFolderName("");
       setParentId("");
+      setIsExamFolder(false);
       setCreateFolderOpen(false);
       router.refresh();
     });
@@ -140,55 +151,84 @@ export function PaidFormationManager({
     });
   };
 
+  const folderSummary = (id: string) => {
+    const resourceCount = resources.filter((resource) => resource.folderId === id).length;
+    const childCount = folders.filter((folder) => folder.parentId === id).length;
+    const parts = [];
+    if (childCount) parts.push(`${childCount} dossier${childCount > 1 ? "s" : ""}`);
+    if (resourceCount) parts.push(`${resourceCount} ressource${resourceCount > 1 ? "s" : ""}`);
+    return parts.join(" · ") || "Vide";
+  };
+
   const renderFolder = (currentParentId: string | null, depth = 0): React.ReactNode => {
     const children = folders.filter((folder) => folder.parentId === currentParentId);
     return children.map((folder) => (
       <div key={folder.id} className="border-l border-slate-200 dark:border-slate-700" style={{ marginLeft: depth ? 18 : 0 }}>
-        <div className="flex items-center gap-2 py-2 pl-3">
-          <Folder className="h-4 w-4 shrink-0 text-amber-600" />
-          {editingFolderId === folder.id ? (
-            <span className="min-w-0 flex-1 truncate font-medium text-slate-800 dark:text-slate-200">{folder.name}</span>
-          ) : (
-            <>
-              <span className="min-w-0 flex-1 truncate font-medium text-slate-800 dark:text-slate-200">{folder.name}</span>
-              <button type="button" title="Renommer le dossier" onClick={() => { setEditingFolderId(folder.id); setEditingFolderName(folder.name); }} className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white"><Pencil className="h-3.5 w-3.5" /></button>
-              <button type="button" title={folder.canDelete ? "Supprimer le dossier vide" : "Le dossier doit être vide"} disabled={!folder.canDelete || folderPending} onClick={() => handleDeleteFolder(folder.id)} className="p-1 text-slate-400 hover:text-red-600 disabled:opacity-30"><Trash2 className="h-3.5 w-3.5" /></button>
-            </>
-          )}
+        <div className="flex items-center gap-1 py-1.5 pl-1">
+          <button
+            type="button"
+            onClick={() => toggle(folder.id)}
+            aria-expanded={isExpanded(folder.id)}
+            className="flex min-w-0 flex-1 items-center gap-2 rounded px-2 py-1 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60"
+          >
+            <ChevronRight className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${isExpanded(folder.id) ? "rotate-90" : ""}`} />
+            {folder.isExam
+              ? <GraduationCap className="h-4 w-4 shrink-0 text-violet-600" />
+              : isExpanded(folder.id) ? <FolderOpen className="h-4 w-4 shrink-0 text-amber-600" /> : <Folder className="h-4 w-4 shrink-0 text-amber-600" />}
+            <span className="min-w-0 truncate font-medium text-slate-800 dark:text-slate-200">{folder.name}</span>
+            {folder.isExam && <span className="shrink-0 rounded-sm bg-violet-100 px-1.5 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-950/40 dark:text-violet-300">Examen</span>}
+            <span className="shrink-0 text-xs text-slate-400">{folderSummary(folder.id)}</span>
+            {folder.pendingSubmissionCount > 0 && (
+              <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">{folder.pendingSubmissionCount} à corriger</span>
+            )}
+          </button>
+          <button type="button" title="Renommer le dossier" onClick={() => { setEditingFolderId(folder.id); setEditingFolderName(folder.name); }} className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white"><Pencil className="h-3.5 w-3.5" /></button>
+          <button type="button" title={folder.canDelete ? "Supprimer le dossier vide" : "Le dossier doit être vide"} disabled={!folder.canDelete || folderPending} onClick={() => handleDeleteFolder(folder.id)} className="p-1 text-slate-400 hover:text-red-600 disabled:opacity-30"><Trash2 className="h-3.5 w-3.5" /></button>
         </div>
-        <div className="pl-5">
-          {resources.filter((resource) => resource.folderId === folder.id).map((resource) => (
-            <div key={resource.id} className="flex items-center justify-between gap-3 border-t border-slate-100 py-2 text-sm dark:border-slate-800">
-              <span className="flex min-w-0 items-center gap-2 truncate text-slate-600 dark:text-slate-300">
-                <FileText className="h-4 w-4 shrink-0" />{resource.title}
-                <span className="text-xs text-slate-400">{resource.type}</span>
-              </span>
-              <div className="flex shrink-0 items-center gap-2">
-                <select aria-label={`Déplacer ${resource.title}`} value={resource.folderId} disabled={statusPending} onChange={(event) => {
-                  const targetFolderId = event.currentTarget.value;
-                  startStatusTransition(async () => {
-                    const result = await movePaidFormationResource(resource.id, targetFolderId);
-                    if ("error" in result) toast.error(result.error);
-                    else { toast.success(result.success); router.refresh(); }
-                  });
-                }} className="max-w-36 rounded border border-slate-200 bg-white px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-800">
-                  {folders.map((target) => <option key={target.id} value={target.id}>{target.name}</option>)}
-                </select>
-                <button type="button" disabled={statusPending} onClick={() => startStatusTransition(async () => {
-                  const result = await setPaidFormationResourceStatus(resource.id, resource.status === "PUBLISHED" ? "ARCHIVED" : "PUBLISHED");
-                  if ("error" in result) toast.error(result.error);
-                  else { toast.success(result.success); router.refresh(); }
-                })} className="text-xs text-blue-700 hover:underline disabled:opacity-50">
-                  {resource.status === "PUBLISHED" ? "Archiver" : "Publier"}
-                </button>
-                <button type="button" title="Supprimer la ressource de la formation" onClick={() => setResourceToDelete(resource)} className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30" aria-label={`Supprimer ${resource.title}`}>
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
+        {isExpanded(folder.id) && (
+          <>
+            <div className="pl-8">
+              {resources.filter((resource) => resource.folderId === folder.id).map((resource) => (
+                <div key={resource.id} className="flex items-center justify-between gap-3 border-t border-slate-100 py-2 text-sm dark:border-slate-800">
+                  <span className="flex min-w-0 items-center gap-2 truncate text-slate-600 dark:text-slate-300">
+                    <FileText className="h-4 w-4 shrink-0" />{resource.title}
+                    <span className="text-xs text-slate-400">{resource.type}</span>
+                  </span>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <select aria-label={`Déplacer ${resource.title}`} value={resource.folderId} disabled={statusPending} onChange={(event) => {
+                      const targetFolderId = event.currentTarget.value;
+                      startStatusTransition(async () => {
+                        const result = await movePaidFormationResource(resource.id, targetFolderId);
+                        if ("error" in result) toast.error(result.error);
+                        else { toast.success(result.success); router.refresh(); }
+                      });
+                    }} className="max-w-36 rounded border border-slate-200 bg-white px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-800">
+                      {folders.map((target) => <option key={target.id} value={target.id}>{target.name}</option>)}
+                    </select>
+                    <button type="button" disabled={statusPending} onClick={() => startStatusTransition(async () => {
+                      const result = await setPaidFormationResourceStatus(resource.id, resource.status === "PUBLISHED" ? "ARCHIVED" : "PUBLISHED");
+                      if ("error" in result) toast.error(result.error);
+                      else { toast.success(result.success); router.refresh(); }
+                    })} className="text-xs text-blue-700 hover:underline disabled:opacity-50">
+                      {resource.status === "PUBLISHED" ? "Archiver" : "Publier"}
+                    </button>
+                    <button type="button" title="Supprimer la ressource de la formation" onClick={() => setResourceToDelete(resource)} className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30" aria-label={`Supprimer ${resource.title}`}>
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {folder.isExam && (
+                <ExamSubmissionsLink
+                  href={`/${locale}/dashboard/paid-formations/${formationId}/exams/${folder.id}`}
+                  total={folder.submissionCount}
+                  pending={folder.pendingSubmissionCount}
+                />
+              )}
             </div>
-          ))}
-        </div>
-        {renderFolder(folder.id, depth + 1)}
+            {renderFolder(folder.id, depth + 1)}
+          </>
+        )}
       </div>
     ));
   };
@@ -212,10 +252,21 @@ export function PaidFormationManager({
               </label>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                 Dossier parent
-                <select value={parentId} onChange={(event) => setParentId(event.target.value)} className="mt-1.5 w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-800">
+                <select value={parentId} onChange={(event) => {
+                  const nextParentId = event.target.value;
+                  setParentId(nextParentId);
+                  setIsExamFolder(folders.some((folder) => folder.id === nextParentId && folder.isExam));
+                }} className="mt-1.5 w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-800">
                   <option value="">À la racine de la formation</option>
                   {folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}
                 </select>
+              </label>
+              <label className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-200">
+                <input type="checkbox" checked={isExamFolder} onChange={(event) => setIsExamFolder(event.target.checked)} className="mt-0.5 h-4 w-4 rounded border-slate-300" />
+                <span>
+                  <span className="block font-medium">Dossier d’examen</span>
+                  <span className="block text-xs text-slate-500">Les étudiants pourront y soumettre leur copie dès qu’un sujet y est publié.</span>
+                </span>
               </label>
               <div className="flex justify-end gap-2 border-t border-slate-200 pt-4 dark:border-slate-700">
                 <button type="button" disabled={folderPending} onClick={() => setCreateFolderOpen(false)} className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">Annuler</button>
@@ -313,14 +364,22 @@ export function PaidFormationManager({
       <section>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-semibold text-slate-900 dark:text-white">Contenu de la formation</h2>
-          <button type="button" disabled={statusPending} onClick={() => startStatusTransition(async () => {
-            const nextStatus = formationStatus === "PUBLISHED" ? "ARCHIVED" : "PUBLISHED";
-            const result = await setPaidFormationStatus(formationId, nextStatus);
-            if ("error" in result) toast.error(result.error);
-            else { toast.success(result.success); router.refresh(); }
-          })} className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">
-            <Archive className="h-4 w-4" />{formationStatus === "PUBLISHED" ? "Archiver la formation" : "Publier la formation"}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {folders.length > 0 && (
+              <>
+                <button type="button" onClick={expandAll} className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><ChevronsUpDown className="h-4 w-4" />Tout déplier</button>
+                <button type="button" onClick={collapseAll} className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><ChevronsDownUp className="h-4 w-4" />Tout replier</button>
+              </>
+            )}
+            <button type="button" disabled={statusPending} onClick={() => startStatusTransition(async () => {
+              const nextStatus = formationStatus === "PUBLISHED" ? "ARCHIVED" : "PUBLISHED";
+              const result = await setPaidFormationStatus(formationId, nextStatus);
+              if ("error" in result) toast.error(result.error);
+              else { toast.success(result.success); router.refresh(); }
+            })} className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">
+              <Archive className="h-4 w-4" />{formationStatus === "PUBLISHED" ? "Archiver la formation" : "Publier la formation"}
+            </button>
+          </div>
         </div>
         {folders.length ? <div>{renderFolder(null)}</div> : <p className="text-sm text-slate-500">Créez un premier dossier pour organiser les ressources.</p>}
       </section>
