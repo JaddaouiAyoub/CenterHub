@@ -3,6 +3,7 @@ CREATE TYPE "PaidFormationExamSubmissionStatus" AS ENUM ('PENDING', 'GRADED');
 ALTER TABLE "PaidFormationFolder" ADD COLUMN "isExam" BOOLEAN NOT NULL DEFAULT false;
 
 CREATE TABLE "PaidFormationExamSubmission" (
+    
     "id" TEXT NOT NULL,
     "folderId" TEXT NOT NULL,
     "studentId" TEXT NOT NULL,
