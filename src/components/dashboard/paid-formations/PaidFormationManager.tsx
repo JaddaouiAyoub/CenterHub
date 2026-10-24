@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Archive, ChevronRight, ChevronsDownUp, ChevronsUpDown, FileText, Folder, FolderOpen, FolderPlus, GraduationCap, Link2, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { Archive, ChevronRight, ChevronsDownUp, ChevronsUpDown, FilePlus, FileText, Folder, FolderOpen, FolderPlus, GraduationCap, Link2, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   createPaidFormationFolder,
@@ -16,7 +16,7 @@ import {
 } from "@/actions/paidFormations";
 import { ExamSubmissionsLink } from "./PaidFormationExam";
 import { useExpandedFolders } from "./useExpandedFolders";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface FolderItem {
   id: string;
@@ -68,6 +68,23 @@ export function PaidFormationManager({
   const [resourceType, setResourceType] = useState("PDF");
   const [resourceToDelete, setResourceToDelete] = useState<ResourceItem | null>(null);
   const { isExpanded, toggle, expandAll, collapseAll } = useExpandedFolders(formationId, folders.map((folder) => folder.id));
+  const targetFolderName = (id: string) => folders.find((folder) => folder.id === id)?.name ?? "";
+
+  const openCreateFolder = (parent: FolderItem | null) => {
+    setParentId(parent?.id ?? "");
+    setIsExamFolder(Boolean(parent?.isExam));
+    setFolderName("");
+    setCreateFolderOpen(true);
+  };
+
+  const openCreateResource = (id: string) => {
+    setFolderId(id);
+    setCreateResourceOpen(true);
+  };
+
+  const expandFolder = (id: string) => {
+    if (id && !isExpanded(id)) toggle(id);
+  };
 
   const handleCreateFolder = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -83,6 +100,7 @@ export function PaidFormationManager({
         return;
       }
       toast.success(result.success);
+      expandFolder(parentId);
       setFolderName("");
       setParentId("");
       setIsExamFolder(false);
@@ -129,6 +147,7 @@ export function PaidFormationManager({
         return;
       }
       toast.success(result.success);
+      expandFolder(folderId);
       setTitle("");
       setDescription("");
       setExternalUrl("");
@@ -182,6 +201,8 @@ export function PaidFormationManager({
               <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">{folder.pendingSubmissionCount} à corriger</span>
             )}
           </button>
+          <button type="button" title="Ajouter un sous-dossier" aria-label={`Ajouter un sous-dossier dans ${folder.name}`} onClick={() => openCreateFolder(folder)} className="p-1 text-slate-400 hover:text-amber-600"><FolderPlus className="h-3.5 w-3.5" /></button>
+          <button type="button" title="Ajouter une ressource" aria-label={`Ajouter une ressource dans ${folder.name}`} onClick={() => openCreateResource(folder.id)} className="p-1 text-slate-400 hover:text-blue-700"><FilePlus className="h-3.5 w-3.5" /></button>
           <button type="button" title="Renommer le dossier" onClick={() => { setEditingFolderId(folder.id); setEditingFolderName(folder.name); }} className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white"><Pencil className="h-3.5 w-3.5" /></button>
           <button type="button" title={folder.canDelete ? "Supprimer le dossier vide" : "Le dossier doit être vide"} disabled={!folder.canDelete || folderPending} onClick={() => handleDeleteFolder(folder.id)} className="p-1 text-slate-400 hover:text-red-600 disabled:opacity-30"><Trash2 className="h-3.5 w-3.5" /></button>
         </div>
@@ -236,30 +257,24 @@ export function PaidFormationManager({
   return (
     <div className="space-y-7">
       <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-5 dark:border-slate-700">
+        <button type="button" onClick={() => openCreateFolder(null)} className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">
+          <FolderPlus className="h-4 w-4" />Nouveau dossier racine
+        </button>
+
         <Dialog open={createFolderOpen} onOpenChange={setCreateFolderOpen}>
-          <DialogTrigger className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">
-            <FolderPlus className="h-4 w-4" />Nouveau dossier
-          </DialogTrigger>
           <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle>Créer un dossier</DialogTitle>
-              <DialogDescription>Choisissez un nom et, si besoin, un dossier parent pour créer un sous-dossier.</DialogDescription>
+              <DialogTitle>{parentId ? "Créer un sous-dossier" : "Créer un dossier racine"}</DialogTitle>
+              <DialogDescription>
+                {parentId
+                  ? <>Le dossier sera créé dans « {targetFolderName(parentId)} ».</>
+                  : <>Les sous-dossiers « Comprendre », « S’entraîner » et « Se tester » seront créés automatiquement.</>}
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreateFolder} className="space-y-4">
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                 Nom du dossier
                 <input value={folderName} onChange={(event) => setFolderName(event.target.value)} required maxLength={100} autoFocus className="mt-1.5 w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-800" placeholder="Ex. Chapitre 1" />
-              </label>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                Dossier parent
-                <select value={parentId} onChange={(event) => {
-                  const nextParentId = event.target.value;
-                  setParentId(nextParentId);
-                  setIsExamFolder(folders.some((folder) => folder.id === nextParentId && folder.isExam));
-                }} className="mt-1.5 w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-800">
-                  <option value="">À la racine de la formation</option>
-                  {folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}
-                </select>
               </label>
               <label className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-200">
                 <input type="checkbox" checked={isExamFolder} onChange={(event) => setIsExamFolder(event.target.checked)} className="mt-0.5 h-4 w-4 rounded border-slate-300" />
@@ -279,13 +294,10 @@ export function PaidFormationManager({
         </Dialog>
 
         <Dialog open={createResourceOpen} onOpenChange={setCreateResourceOpen}>
-          <DialogTrigger disabled={!folders.length} className="inline-flex h-10 items-center gap-2 rounded-md bg-blue-700 px-4 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-50">
-            <Link2 className="h-4 w-4" />Ajouter une ressource
-          </DialogTrigger>
           <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
             <DialogHeader>
               <DialogTitle>Ajouter une ressource</DialogTitle>
-              <DialogDescription>Collez le lien de la ressource, choisissez son type et son dossier. Le lien reste masqué aux étudiants.</DialogDescription>
+              <DialogDescription>La ressource sera ajoutée dans « {targetFolderName(folderId)} ». Le lien reste masqué aux étudiants.</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreateResource} className="space-y-4">
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -295,13 +307,6 @@ export function PaidFormationManager({
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                 Description
                 <textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={500} rows={2} className="mt-1.5 w-full resize-y rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-800" placeholder="Description facultative" />
-              </label>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                Dossier
-                <select value={folderId} onChange={(event) => setFolderId(event.target.value)} required className="mt-1.5 w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-800">
-                  <option value="">Choisir un dossier</option>
-                  {folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}
-                </select>
               </label>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                 Type de ressource

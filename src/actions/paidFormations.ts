@@ -6,11 +6,11 @@ import { revalidatePath } from "next/cache";
 import { PaidFormationResourceStatus, PaidFormationResourceType, PaidFormationStatus } from "@prisma/client";
 import { getFileMetadata } from "@/lib/google-drive";
 import { getStudentProfileId, hasCompletedFormationPurchase } from "@/lib/paid-formations";
+import { DEFAULT_FORMATION_FOLDER_NAMES } from "@/lib/paid-formation-folders";
 
 const MANAGER_ROLES = ["ADMIN", "TEACHER", "SECRETARY"];
 const ADMIN_ROLES = ["ADMIN", "SECRETARY"];
 const GRADER_ROLES = ["ADMIN", "TEACHER"];
-const DEFAULT_EXAM_FOLDER_NAME = "Examen";
 const EXAM_SUBMISSION_MIME_TYPES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
 const ALLOWED_MIME_TYPES = new Set([
   "application/pdf",
@@ -75,7 +75,6 @@ export async function createPaidFormation(formData: FormData) {
         description: description || null,
         price,
         status: formationStatus,
-        folders: { create: { name: DEFAULT_EXAM_FOLDER_NAME, isExam: true } },
       },
       select: { id: true },
     });
@@ -123,7 +122,15 @@ export async function createPaidFormationFolder(formData: FormData) {
     });
     if (duplicate) return { error: "Un dossier de ce nom existe déjà à cet endroit" };
 
-    await prisma.paidFormationFolder.create({ data: { formationId, name, parentId, isExam } });
+    await prisma.$transaction(async (tx) => {
+      const folder = await tx.paidFormationFolder.create({ data: { formationId, name, parentId, isExam }, select: { id: true } });
+      // Les dossiers créés à la racine reçoivent automatiquement la structure pédagogique par défaut.
+      if (!parentId && !isExam) {
+        await tx.paidFormationFolder.createMany({
+          data: DEFAULT_FORMATION_FOLDER_NAMES.map((childName) => ({ formationId, name: childName, parentId: folder.id })),
+        });
+      }
+    });
     revalidateFormationViews(formationId);
     return { success: "Dossier créé" };
   } catch (error) {

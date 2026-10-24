@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, Lock } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { formatSubmissionDate } from "@/lib/paid-formation-format";
+import { sortFormationFolders } from "@/lib/paid-formation-folders";
 import { getStudentProfileId, hasCompletedFormationPurchase } from "@/lib/paid-formations";
 import { PaidFormationManager } from "@/components/dashboard/paid-formations/PaidFormationManager";
 import { PaidFormationStudentContents } from "@/components/dashboard/paid-formations/PaidFormationStudentContents";
@@ -73,7 +74,7 @@ export default async function PaidFormationDetailPage({ params }: Props) {
   const hasAccess = canManage || Boolean(
     studentId && await hasCompletedFormationPurchase(studentId, formation.id)
   );
-  const folders = formation.folders.map((folder) => ({
+  const folders = sortFormationFolders(formation.folders).map((folder) => ({
     ...folder,
     resources: folder.resources.map((resource) => ({ ...resource, folderId: folder.id })),
     examSubmissions: folder.examSubmissions.map(({ student, submittedAt, ...submission }) => ({
