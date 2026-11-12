@@ -96,6 +96,8 @@ export function PaymentManager() {
       toast.success("Paiement enregistré");
       setIsPaymentOpen(false);
       fetchData();
+    } else if ("info" in res && res.info) {
+      toast.info(res.info);
     } else {
       toast.error(res.error || "Échec de l'enregistrement");
     }
@@ -112,6 +114,8 @@ export function PaymentManager() {
         toast.success("Paiement mis à jour");
         setEditingPayment(null);
         fetchData();
+      } else if ("info" in res && res.info) {
+        toast.info(res.info);
       } else {
         console.error("updatePayment returned error:", res.error);
         toast.error(res.error || "Échec de la mise à jour");

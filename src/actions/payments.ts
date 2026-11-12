@@ -51,6 +51,33 @@ export async function getPayments(search = "", page = 1, pageSize = 10) {
   }
 }
 
+const MONTH_NAMES = [
+  "janvier", "février", "mars", "avril", "mai", "juin",
+  "juillet", "août", "septembre", "octobre", "novembre", "décembre"
+];
+
+// Returns an info message if the student already has a payment for this month/year
+// (excluding `excludeId`, used when editing an existing payment), otherwise null.
+async function findExistingPayment(
+  studentId: string,
+  month: number,
+  year: number,
+  excludeId?: string
+): Promise<string | null> {
+  const existing = await prisma.payment.findFirst({
+    where: {
+      studentId,
+      month,
+      year,
+      ...(excludeId ? { id: { not: excludeId } } : {})
+    },
+    select: { id: true }
+  });
+  if (!existing) return null;
+  const monthLabel = MONTH_NAMES[month - 1] ?? month;
+  return `Un paiement existe déjà pour cet étudiant pour ${monthLabel} ${year}. Vous pouvez le modifier.`;
+}
+
 export async function createPayment(formData: FormData) {
   const studentId = formData.get("studentId") as string;
   const amount = parseFloat(formData.get("amount") as string);
@@ -65,6 +92,9 @@ export async function createPayment(formData: FormData) {
   }
 
   try {
+    const duplicate = await findExistingPayment(studentId, month, year);
+    if (duplicate) return { info: duplicate };
+
     await prisma.payment.create({
       data: {
         studentId,
@@ -109,6 +139,11 @@ export async function updatePayment(id: string, formData: FormData) {
   const courseIds = formData.getAll("courseIds") as string[];
 
   try {
+    if (studentId && !isNaN(month) && !isNaN(year)) {
+      const duplicate = await findExistingPayment(studentId, month, year, id);
+      if (duplicate) return { info: duplicate };
+    }
+
     await prisma.payment.update({
       where: { id },
       data: {
